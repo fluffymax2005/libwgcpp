@@ -1,0 +1,85 @@
+#ifndef __WG_DEVICE__
+#define __WG_DEVICE__
+
+#include "wgexception.h"
+
+#include <wireguard.h>
+#include <string>
+#include <cstdint>
+#include <memory>
+#include <vector>
+#include <cstring>
+#include <cerrno>
+
+enum class ThreadSafety : uint8_t {
+    SAFE,
+    UNSAFE,
+};
+
+// TO DO
+// Implement Thread safe and unsafe versions
+//template<ThreadSafety = ThreadSafety::SAFE>
+class WgInterface {
+public:
+    using WgKeyStringType = wg_key_b64_string;
+
+    virtual ~WgInterface() noexcept;
+
+    WgInterface(const WgInterface&) = delete;
+    WgInterface& operator=(const WgInterface&) noexcept = delete;
+
+    WgInterface(WgInterface&& other) noexcept;
+    WgInterface& operator=(WgInterface&& other) noexcept;
+
+    // TO DO
+    // Consider deprecating auto generating names for interfaces
+    // Instead probably provide interface name factory
+    WgInterface(const std::string& name = "") noexcept;
+    WgInterface(const char* name = "") noexcept;
+
+    bool inline hasDevice() const noexcept;
+    bool inline hasPrivateKey() const noexcept;
+    bool inline isListening() const noexcept;
+    bool inline isSet() const noexcept;
+
+    virtual void setName(const std::string& name) noexcept;
+    virtual void setName(const char* name) noexcept;
+
+    // TO DO
+    // Change wg_key with WgPrivateKey
+    virtual void setPrivateKey(wg_key private_key, bool force = false);
+
+    // TO DO
+    // Change wg_ket with WgPresharedKey
+    virtual void setPresharedKey(wg_key preshared_key, bool force = false);
+
+    // TO DO
+    // Change wg_peer with self implemented version later
+    virtual void addPeer(wg_peer peer) noexcept(false);
+
+    virtual void set() noexcept(false);
+    virtual void release() noexcept(false);
+    virtual void poweroff() noexcept(false);
+
+    std::vector<std::string> getPeers() const;
+
+protected:
+    std::unique_ptr<wg_device> device;
+    bool isInterfaceSet{false};
+
+    enum KeyType : uint8_t {
+        PRESHARED,
+        PRIVATE,
+        PUBLIC,
+    };
+
+    // TO DO
+    // Change wg_key later with WgKey base class
+    void setKey(wg_key key, KeyType type, bool force = false);
+
+    virtual void setPublicKey(wg_key private_key, bool force = false);
+
+    static inline uint16_t ID{0};
+};
+
+#endif
