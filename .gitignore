@@ -2,9 +2,11 @@
 build/*
 debug/*
 docs/html/*
+docs/latex/*
 scripts/*
 .qtcreator/*
 .vscode/*
+
 
 # Ignore file extensions
 *.o
