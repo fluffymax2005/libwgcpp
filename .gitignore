@@ -1,0 +1,11 @@
+# Ignore directories
+build/*
+debug/*
+docs/html/*
+
+# Ignore file extensions
+*.o
+*.obj
+*.asm
+*.tmp
+*.backup
