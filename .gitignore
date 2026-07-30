@@ -3,6 +3,8 @@ build/*
 debug/*
 docs/html/*
 scripts/*
+.qtcreator/*
+.vscode/*
 
 # Ignore file extensions
 *.o
