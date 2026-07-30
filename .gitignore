@@ -2,6 +2,7 @@
 build/*
 debug/*
 docs/html/*
+scripts/*
 
 # Ignore file extensions
 *.o
@@ -9,3 +10,5 @@ docs/html/*
 *.asm
 *.tmp
 *.backup
+
+
