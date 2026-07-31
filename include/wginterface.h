@@ -61,8 +61,6 @@ protected:
     bool isInterfaceSet{false};
 
     void setKey(WgKey& key, KeyType type, bool force = false);
-
-    static inline uint16_t ID{0};
 };
 
 #endif
