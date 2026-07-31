@@ -154,21 +154,14 @@ void WgInterface::setKey(WgKey& key, KeyType type, bool force) {
     }
 
     // Set key anyway
-    switch (type) {
-    case KeyType::PRIVATE:
+    // Private key request automatically set public one
+    if (type == KeyType::PRIVATE) {
         std::memcpy(device->private_key, key.data(), WG_KEY_LEN);
-        device->flags = static_cast<enum wg_device_flags>(device->flags | WGDEVICE_HAS_PRIVATE_KEY);
-        break;
-    case KeyType::PUBLIC:
-        if (device->flags & WGDEVICE_HAS_PRIVATE_KEY) {
-            wg_generate_public_key(device->public_key, device->private_key);
-            device->flags = static_cast<enum wg_device_flags>(device->flags | WGDEVICE_HAS_PUBLIC_KEY);
-        }
-    }
-}
+        device->flags |= WGDEVICE_HAS_PRIVATE_KEY;
 
-void WgInterface::setPublicKey(WgPrivateKey& private_key, bool force) {
-    setKey(private_key, KeyType::PUBLIC, force);
+        wg_generate_public_key(device->public_key, device->private_key);
+        device->flags |= WGDEVICE_HAS_PUBLIC_KEY;
+    }
 }
 
 WgInterface& WgInterface::operator=(WgInterface&& other) noexcept {
