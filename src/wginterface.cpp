@@ -142,6 +142,7 @@ std::vector<std::string> WgInterface::getPeers() const {
             throw WgException(std::string("Unable to get peer's key. Reason: ") + e.what(), 0);
         }
     }
+    wg_free_device(device);
     return peers;
 }
 
