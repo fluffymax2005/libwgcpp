@@ -2,6 +2,8 @@
 #define __WG_DEVICE__
 
 #include "wgexception.h"
+#include "wgpublickey.h"
+#include "wgpresharedkey.h"
 
 #include <wireguard.h>
 #include <string>
@@ -31,11 +33,8 @@ public:
     WgInterface(WgInterface&& other) noexcept;
     WgInterface& operator=(WgInterface&& other) noexcept;
 
-    // TO DO
-    // Consider deprecating auto generating names for interfaces
-    // Instead probably provide interface name factory
-    WgInterface(const std::string& name = "") noexcept;
-    WgInterface(const char* name = "") noexcept;
+    WgInterface(const std::string& name) noexcept;
+    WgInterface(const char* name) noexcept;
 
     bool inline hasDevice() const noexcept;
     bool inline hasPrivateKey() const noexcept;

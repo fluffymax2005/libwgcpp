@@ -21,17 +21,9 @@ WgInterface::WgInterface(const std::string &name) noexcept {
     if (device == nullptr)
         return;
 
-    char pname[IFNAMSIZ];
-    if (name.length() == 0) {
-        strcpy(pname, "wg");
-        snprintf(pname + 2, sizeof(pname) - 2, "%d", ID++);
-    } else if (name.length() < IFNAMSIZ) {
-        strncpy(pname, name.c_str(), name.length());
-    } else {
-        return;
+    if (name.length() > 1 && name.length() < IFNAMSIZ) {
+        strcpy(device->name, name.c_str());
     }
-
-    strcpy(device->name, pname);
 }
 
 WgInterface::WgInterface(const char *name) noexcept {
@@ -39,17 +31,9 @@ WgInterface::WgInterface(const char *name) noexcept {
     if (device == nullptr)
         return;
 
-    char pname[IFNAMSIZ];
-    if (name == nullptr || strlen(name) == 0) {
-        strcpy(pname, "wg");
-        snprintf(pname + 2, sizeof(pname) - 2, "%d", ID++);
-    } else if (strlen(name) < IFNAMSIZ) {
-        strncpy(pname, name, strlen(name));
-    } else {
-        return;
+    if (name && std::strlen(name) > 0 && std::strlen(name) < IFNAMSIZ) {
+        strncpy(device->name, name, std::strlen(name));
     }
-
-    strcpy(device->name, pname);
 }
 
 bool WgInterface::hasDevice() const noexcept {
