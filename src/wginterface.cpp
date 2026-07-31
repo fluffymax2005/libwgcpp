@@ -133,6 +133,8 @@ void WgInterface::setKey(WgKey& key, KeyType type, bool force) {
 
         wg_generate_public_key(device->public_key, device->private_key);
         device->flags |= WGDEVICE_HAS_PUBLIC_KEY;
+
+        key.makeZero();
     }
 }
 
