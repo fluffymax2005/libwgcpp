@@ -21,9 +21,7 @@ WgInterface::WgInterface(const std::string &name) noexcept {
     if (device == nullptr)
         return;
 
-    if (name.length() > 1 && name.length() < IFNAMSIZ) {
-        strcpy(device->name, name.c_str());
-    }
+    setName(name);
 }
 
 WgInterface::WgInterface(const char *name) noexcept {
@@ -31,9 +29,14 @@ WgInterface::WgInterface(const char *name) noexcept {
     if (device == nullptr)
         return;
 
-    if (name && std::strlen(name) > 0 && std::strlen(name) < IFNAMSIZ) {
-        strncpy(device->name, name, std::strlen(name));
-    }
+    setName(name);
+}
+
+bool WgInterface::initialize() noexcept {
+    if (device)
+        return false;
+    device = std::make_unique<wg_device>();
+    return device.get();
 }
 
 bool WgInterface::hasDevice() const noexcept {
@@ -59,45 +62,14 @@ bool WgInterface::isSet() const noexcept {
 }
 
 void WgInterface::setName(const std::string &name) noexcept {
-    if (device) {
-        if (isInterfaceSet)
-            poweroff();
+    setName(name.c_str());
 
-        char pname[IFNAMSIZ];
-        if (name.length() == 0) {
-            strcpy(pname, "wg");
-            snprintf(pname + 2, sizeof(pname) - 2, "%d", ID);
-        } else if (name.length() < IFNAMSIZ) {
-            strncpy(pname, name.c_str(), name.length());
-        } else {
-            return;
-        }
-
-        strcpy(device->name, pname);
-
-        set();
-    }
 }
 
 void WgInterface::setName(const char *name) noexcept {
-    if (device) {
-        if (isInterfaceSet)
-            poweroff();
-
-        char pname[IFNAMSIZ];
-        if (name == nullptr || strlen(name) == 0) {
-            strcpy(pname, "wg");
-            snprintf(pname + 2, sizeof(pname) - 2, "%d", ID);
-        } else if (strlen(name) < IFNAMSIZ) {
-            strncpy(pname, name, strlen(name));
-        } else {
-            return;
-        }
-
-        strcpy(device->name, pname);
-
-        set();
-    }
+    // Setting name is only allowed case interface is powered off and name is valid
+    if (device && !isInterfaceSet && tryValidateName(name))
+        std::strcpy(device->name, name);
 }
 
 void WgInterface::setPrivateKey(WgPrivateKey& private_key, bool force) {
@@ -162,6 +134,10 @@ void WgInterface::setKey(WgKey& key, KeyType type, bool force) {
         wg_generate_public_key(device->public_key, device->private_key);
         device->flags |= WGDEVICE_HAS_PUBLIC_KEY;
     }
+}
+
+bool WgInterface::tryValidateName(const char *name) const noexcept {
+    return name && std::strlen(name) > 0 && std::strlen(name) < IFNAMSIZ;
 }
 
 WgInterface& WgInterface::operator=(WgInterface&& other) noexcept {

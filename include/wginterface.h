@@ -36,6 +36,8 @@ public:
     WgInterface(const std::string& name) noexcept;
     WgInterface(const char* name) noexcept;
 
+    bool initialize() noexcept;
+
     bool inline hasDevice() const noexcept;
     bool inline hasPrivateKey() const noexcept;
     bool inline isListening() const noexcept;
@@ -61,6 +63,9 @@ protected:
     bool isInterfaceSet{false};
 
     void setKey(WgKey& key, KeyType type, bool force = false);
+
+private:
+    inline bool tryValidateName(const char* name) const noexcept;
 };
 
 #endif
