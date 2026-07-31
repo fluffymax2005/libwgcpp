@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include <array>
+#include <cstring>
 
 constexpr uint32_t WG_KEY_LEN = sizeof(wg_key);
 
@@ -20,6 +21,7 @@ public:
     uint32_t size() const noexcept;
     std::shared_ptr<std::array<uint8_t, WG_KEY_LEN>> cloneData() const noexcept;
     bool initialize() noexcept;
+    void makeZero() noexcept;
 
 protected:
     std::shared_ptr<std::array<uint8_t, WG_KEY_LEN>> key{nullptr};

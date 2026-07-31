@@ -1,6 +1,5 @@
 #include "wgkey.h"
 
-
 const uint8_t* WgKey::data() const noexcept {
     return key ? key->data() : nullptr;
 }
@@ -20,4 +19,11 @@ bool WgKey::initialize() noexcept {
         return false;
     key = std::make_shared<std::array<uint8_t, WG_KEY_LEN>>();
     return key->empty();
+}
+
+void WgKey::makeZero() noexcept {
+    if (key == nullptr || key->data() == nullptr)
+        return;
+    std::memcpy(key->data(), 0, WG_KEY_LEN);
+    isGenerated = false;
 }
