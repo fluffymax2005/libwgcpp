@@ -7,6 +7,14 @@ add_library(wgcpp SHARED
     include/wginterface.h
     include/wgexception.h
     src/wgexception.cpp
+    include/wgkey.h
+    include/wgpresharedkey.h
+    src/wgkey.cpp
+    src/wgpresharedkey.cpp
+    include/wgprivatekey.h
+    src/wgprivatekey.cpp
+    include/wgpublickey.h
+    src/wgpublickey.cpp
 )
 
 target_include_directories(wgcpp
