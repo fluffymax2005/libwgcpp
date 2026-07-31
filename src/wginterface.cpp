@@ -60,6 +60,7 @@ bool WgInterface::hasPrivateKey() const noexcept {
     if (device) {
         return device->flags & WGDEVICE_HAS_PRIVATE_KEY;
     }
+    return false;
 }
 
 bool WgInterface::isListening() const noexcept {
@@ -161,6 +162,7 @@ std::vector<std::string> WgInterface::getPeers() const {
             throw WgException(std::string("Unable to get peer's key. Reason: ") + e.what(), 0);
         }
     }
+    return peers;
 }
 
 void WgInterface::setKey(wg_key key, KeyType type, bool force) {
