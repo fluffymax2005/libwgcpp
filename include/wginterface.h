@@ -44,13 +44,7 @@ public:
     virtual void setName(const std::string& name) noexcept;
     virtual void setName(const char* name) noexcept;
 
-    // TO DO
-    // Change wg_key with WgPrivateKey
-    virtual void setPrivateKey(wg_key private_key, bool force = false);
-
-    // TO DO
-    // Change wg_ket with WgPresharedKey
-    virtual void setPresharedKey(wg_key preshared_key, bool force = false);
+    virtual void setPrivateKey(WgPrivateKey& private_key, bool force = false);
 
     // TO DO
     // Change wg_peer with self implemented version later
@@ -74,9 +68,9 @@ protected:
 
     // TO DO
     // Change wg_key later with WgKey base class
-    void setKey(wg_key key, KeyType type, bool force = false);
+    void setKey(WgKey& key, KeyType type, bool force = false);
 
-    virtual void setPublicKey(wg_key private_key, bool force = false);
+    virtual void setPublicKey(WgPrivateKey& private_key, bool force = false);
 
     static inline uint16_t ID{0};
 };

@@ -100,12 +100,8 @@ void WgInterface::setName(const char *name) noexcept {
     }
 }
 
-void WgInterface::setPrivateKey(wg_key private_key, bool force) {
+void WgInterface::setPrivateKey(WgPrivateKey& private_key, bool force) {
     setKey(private_key, KeyType::PRIVATE, force);
-}
-
-void WgInterface::setPresharedKey(wg_key preshared_key, bool force) {
-    setKey(preshared_key, KeyType::PRESHARED, force);
 }
 
 void WgInterface::set() noexcept(false) {
@@ -149,18 +145,28 @@ std::vector<std::string> WgInterface::getPeers() const {
     return peers;
 }
 
-void WgInterface::setKey(wg_key key, KeyType type, bool force) {
+void WgInterface::setKey(WgKey& key, KeyType type, bool force) {
     if (device == nullptr)
         return;
-    if (!force) {
-        if (isInterfaceSet)
-            throw WgException("Interface \"" + std::string(device->name) + "\" is up. Hot key change is not allowed", 1000);
-        // TO DO
-        // Implement WgPublic, WgPrivate and WgPreshared keys which can generate keys itself and integrate it here
+    if (!force && isInterfaceSet) {
+        throw WgException("Interface \"" + std::string(device->name) + "\" is up. Hot key change is not allowed", 1000);
+    }
+
+    // Set key anyway
+    switch (type) {
+    case KeyType::PRIVATE:
+        std::memcpy(device->private_key, key.data(), WG_KEY_LEN);
+        device->flags = static_cast<enum wg_device_flags>(device->flags | WGDEVICE_HAS_PRIVATE_KEY);
+        break;
+    case KeyType::PUBLIC:
+        if (device->flags & WGDEVICE_HAS_PRIVATE_KEY) {
+            wg_generate_public_key(device->public_key, device->private_key);
+            device->flags = static_cast<enum wg_device_flags>(device->flags | WGDEVICE_HAS_PUBLIC_KEY);
+        }
     }
 }
 
-void WgInterface::setPublicKey(wg_key private_key, bool force) {
+void WgInterface::setPublicKey(WgPrivateKey& private_key, bool force) {
     setKey(private_key, KeyType::PUBLIC, force);
 }
 
