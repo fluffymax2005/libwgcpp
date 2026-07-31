@@ -10,6 +10,23 @@
 
 constexpr uint32_t WG_KEY_LEN = sizeof(wg_key);
 
+enum class KeyType : uint8_t {
+    PRESHARED,
+    PRIVATE,
+    PUBLIC,
+};
+
+inline enum wg_device_flags operator|(enum wg_device_flags a, enum wg_device_flags b) {
+    return static_cast<wg_device_flags>(
+        static_cast<int>(a) | static_cast<int>(b)
+    );
+}
+
+inline enum wg_device_flags& operator|=(enum wg_device_flags& a, enum wg_device_flags b) {
+    a = a | b;
+    return a;
+}
+
 class WgKey {
 public:
     virtual ~WgKey() = default;

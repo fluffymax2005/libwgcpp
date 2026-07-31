@@ -60,12 +60,6 @@ protected:
     std::unique_ptr<wg_device> device;
     bool isInterfaceSet{false};
 
-    enum KeyType : uint8_t {
-        PRESHARED,
-        PRIVATE,
-        PUBLIC,
-    };
-
     void setKey(WgKey& key, KeyType type, bool force = false);
 
     virtual void setPublicKey(WgPrivateKey& private_key, bool force = false);
