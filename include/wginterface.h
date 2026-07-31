@@ -43,6 +43,9 @@ public:
     bool inline isListening() const noexcept;
     bool inline isSet() const noexcept;
 
+    void setListeningPort(uint16_t port) const;
+    void setFWMark(uint32_t mark) const noexcept;
+
     virtual void setName(const std::string& name) noexcept;
     virtual void setName(const char* name) noexcept;
 

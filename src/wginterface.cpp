@@ -61,9 +61,25 @@ bool WgInterface::isSet() const noexcept {
     return isInterfaceSet;
 }
 
+void WgInterface::setListeningPort(uint16_t port) const {
+    if (port == 0)
+        throw std::invalid_argument("Invalid port for interface \"" + (device ? std::string(device->name) : "") + "\" is given");
+    if (device) {
+        device->listen_port = port;
+        device->flags |= WGDEVICE_HAS_LISTEN_PORT;
+    }
+}
+
+void WgInterface::setFWMark(uint32_t mark) const noexcept {
+    if (device) {
+        device->fwmark = mark;
+        device->flags |= WGDEVICE_HAS_FWMARK;
+    }
+
+}
+
 void WgInterface::setName(const std::string &name) noexcept {
     setName(name.c_str());
-
 }
 
 void WgInterface::setName(const char *name) noexcept {
@@ -83,11 +99,21 @@ void WgInterface::set() noexcept(false) {
 }
 
 void WgInterface::release() noexcept(false) {
+    poweroff();
 
+    // TO DO
+    // Implement WgPeer then manage to free data of peers
+
+
+    device.release();
 }
 
 void WgInterface::poweroff() noexcept(false) {
-
+    if (device && isInterfaceSet) {
+        if (wg_del_device(device->name) < 0)
+            throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be deleted", errno);
+        isInterfaceSet = false;
+    }
 }
 
 std::vector<std::string> WgInterface::getPeers() const {
