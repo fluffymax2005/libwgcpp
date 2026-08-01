@@ -86,6 +86,8 @@ public:
 
     bool initialize() noexcept;
 
+    wg_peer* get() const noexcept;
+
 private:
     Protocol proto;
 
