@@ -83,6 +83,10 @@ bool WgPeer::initialize() noexcept {
     return peer.get();
 }
 
+wg_peer* WgPeer::get() const noexcept {
+    return peer.get();
+}
+
 void WgPeer::setKey(WgKey &key, KeyType type) const {
     if (peer == nullptr)
         return;
