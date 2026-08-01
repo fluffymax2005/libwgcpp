@@ -39,6 +39,21 @@ inline enum wg_peer_flags& operator|=(enum wg_peer_flags& a, enum wg_peer_flags 
     return a;
 }
 
+inline enum wg_peer_flags operator&(enum wg_peer_flags a, enum wg_peer_flags b) {
+    return static_cast<wg_peer_flags>(
+        static_cast<int>(a) & static_cast<int>(b)
+    );
+}
+
+inline enum wg_peer_flags& operator&=(enum wg_peer_flags& a, enum wg_peer_flags b) {
+    a = a & b;
+    return a;
+}
+
+inline enum wg_peer_flags operator!(enum wg_peer_flags a) {
+    return static_cast<wg_peer_flags>(a);
+}
+
 
 class WgPeer {
 public:
