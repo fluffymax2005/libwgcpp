@@ -64,13 +64,10 @@ public:
 
     // TO DO
     // Implement wg_allowedip and integrate there
-    void prependAllowedIP(const wg_allowedip& allowedip) const;
-    void pushBackAllowedIP(const wg_allowedip& allowedip) const;
-    void insertAllowedIP(const wg_allowedip& allowedip, size_t pos) const;
-    void removeAllowedIP(const wg_allowedip& allowedip) const;
-    void removeAllAllowedIPs() const;
+    void connectPeer(WgPeer& other) noexcept;
+    void disconnectPeer() noexcept;
 
-    void setPersistentKeepAlive(decltype(wg_peer::persistent_keepalive_interval) time) const;
+    void setPersistentKeepAlive(uint16_t time) const noexcept;
 
     bool initialize() noexcept;
 
