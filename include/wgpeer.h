@@ -66,6 +66,8 @@ public:
     WgPeer(WgPeer&& other) noexcept;
     WgPeer& operator=(WgPeer&& other) noexcept;
 
+    bool operator==(const WgPeer& other) const noexcept;
+
     // Empty peer if no keys provided
     WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr, Protocol proto = Protocol::IPv4) noexcept;
     WgPeer(Protocol proto = Protocol::IPv4) noexcept;
