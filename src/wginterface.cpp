@@ -116,7 +116,8 @@ void WgInterface::setPrivateKey(WgPrivateKey& private_key, bool force) {
 void WgInterface::set() noexcept(false) {
     if (isInterfaceSet)
         return;
-
+    // TO DO
+    // After WgPeer implementing make this one
 }
 
 void WgInterface::release() noexcept(false) {
