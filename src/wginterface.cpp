@@ -34,6 +34,7 @@ WgInterface::WgInterface(WgInterface &&other) noexcept {
         this->device = std::move(other.device);
         this->isInterfaceSet = other.isInterfaceSet;
         other.isInterfaceSet = false;
+        this->peers = std::move(other.peers);
     }
 }
 
@@ -53,7 +54,7 @@ WgInterface::WgInterface(const char *name) noexcept {
     setName(name);
 }
 
-bool WgInterface::initialize() noexcept {
+bool WgInterface::initializeDevice() noexcept {
     if (device)
         return false;
     device = std::make_unique<wg_device>();
@@ -111,6 +112,18 @@ void WgInterface::setName(const char *name) noexcept {
 
 void WgInterface::setPrivateKey(WgPrivateKey& private_key, bool force) {
     setKey(private_key, KeyType::PRIVATE, force);
+}
+
+void WgInterface::addPeer(std::unique_ptr<WgPeer> peer) noexcept(false) {
+    if (peer == nullptr)
+        return;
+    peers.push_back(std::move(peer));
+
+    // Invalidate peers connections
+}
+
+void WgInterface::removePeer(const WgPublicKey &key) noexcept(false) {
+
 }
 
 void WgInterface::set() noexcept(false) {
@@ -174,7 +187,7 @@ void WgInterface::setKey(WgKey& key, KeyType type, bool force) {
     }
 
     // Set key anyway
-    // Private key request automatically set public one
+    // Private key request automatically sets public one
     if (type == KeyType::PRIVATE) {
         std::memcpy(device->private_key, key.data(), WG_KEY_LEN);
         device->flags |= WGDEVICE_HAS_PRIVATE_KEY;
@@ -188,6 +201,21 @@ void WgInterface::setKey(WgKey& key, KeyType type, bool force) {
 
 bool WgInterface::tryValidateName(const char *name) const noexcept {
     return name && std::strlen(name) > 0 && std::strlen(name) < IFNAMSIZ;
+}
+
+void WgInterface::invalidatePeers() const noexcept {
+    if (device == nullptr)
+        return;
+
+
+    if (peers.empty()) {
+        // Update links case there no peers left
+        device->first_peer = nullptr;
+        device->last_peer = nullptr;
+    } else {
+
+    }
+
 }
 
 WgInterface& WgInterface::operator=(WgInterface&& other) noexcept {
