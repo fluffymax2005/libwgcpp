@@ -27,6 +27,10 @@ WgPeer::WgPeer(WgPeer &&other) noexcept {
     }
 }
 
+bool WgPeer::operator==(const WgPeer &other) const noexcept {
+    return peer && other.peer && std::memcmp(peer->public_key, other.peer->public_key, WG_KEY_LEN) == 0;
+}
+
 WgPeer::WgPeer(Protocol proto) noexcept {
     peer = std::unique_ptr<wg_peer, PeerDeleter>(new (std::nothrow) wg_peer());
     this->proto = proto;
