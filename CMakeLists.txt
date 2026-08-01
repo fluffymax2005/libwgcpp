@@ -15,6 +15,10 @@ add_library(wgcpp SHARED
     src/wgprivatekey.cpp
     include/wgpublickey.h
     src/wgpublickey.cpp
+    include/wgpeer.h
+    src/wgpeer.cpp
+    include/wgallowedip.h
+    src/wgallowedip.cpp
 )
 
 target_include_directories(wgcpp
