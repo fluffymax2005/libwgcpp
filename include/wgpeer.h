@@ -24,6 +24,7 @@
 #include "wireguard.h"
 #include "wgpublickey.h"
 #include "wgpresharedkey.h"
+#include "wgallowedip.h"
 
 #include <memory>
 
@@ -51,8 +52,8 @@ public:
     WgPeer& operator=(WgPeer&& other) noexcept;
 
     // Empty peer if no keys provided
-    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr, Protocol proto = IPv4) noexcept;
-    WgPeer(Protocol proto = IPv4) noexcept;
+    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr, Protocol proto = Protocol::IPv4) noexcept;
+    WgPeer(Protocol proto = Protocol::IPv4) noexcept;
 
     void setPublicKey(WgPublicKey& key) const;
     void setPresharedKey(WgPresharedKey& key) const;
