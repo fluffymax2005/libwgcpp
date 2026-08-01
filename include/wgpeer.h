@@ -77,8 +77,6 @@ public:
     // Implement endpoint and integrate there
     void setEndpoint(const wg_endpoint& endpoint) const;
 
-    // TO DO
-    // Implement wg_allowedip and integrate there
     void connectPeer(WgPeer& other) noexcept;
     void disconnectPeer() noexcept;
 
