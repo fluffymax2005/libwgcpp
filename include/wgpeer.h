@@ -27,8 +27,25 @@
 
 #include <memory>
 
+inline enum wg_peer_flags operator|(enum wg_peer_flags a, enum wg_peer_flags b) {
+    return static_cast<wg_peer_flags>(
+        static_cast<int>(a) | static_cast<int>(b)
+    );
+}
+
+inline enum wg_peer_flags& operator|=(enum wg_peer_flags& a, enum wg_peer_flags b) {
+    a = a | b;
+    return a;
+}
+
+
 class WgPeer {
 public:
+    enum Protocol : uint8_t {
+        IPv4,
+        IPv6
+    };
+
     virtual ~WgPeer() noexcept = default;
 
     // Copying semantics is not allowed
@@ -39,7 +56,8 @@ public:
     WgPeer& operator=(WgPeer&& other) noexcept;
 
     // Empty peer if no keys provided
-    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr) noexcept;
+    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr, Protocol proto = IPv4) noexcept;
+    WgPeer(Protocol proto = IPv4) noexcept;
 
     void setPublicKey(WgPublicKey& key) const;
     void setPresharedKey(WgPresharedKey& key) const;
@@ -50,18 +68,28 @@ public:
 
     // TO DO
     // Implement wg_allowedip and integrate there
-    void addAllowedIP(const wg_allowedip& allowedip) const;
-    void removeAllowedIP(const wg_allowedip allowedip) const;
+    void prependAllowedIP(const wg_allowedip& allowedip) const;
+    void pushBackAllowedIP(const wg_allowedip& allowedip) const;
+    void insertAllowedIP(const wg_allowedip& allowedip, size_t pos) const;
+    void removeAllowedIP(const wg_allowedip& allowedip) const;
+    void removeAllAllowedIPs() const;
 
     void setPersistentKeepAlive(decltype(wg_peer::persistent_keepalive_interval) time) const;
 
-protected:
+    bool initialize() noexcept;
+
+private:
+    Protocol proto;
+
     // Custom deleter for convenient peer struct destroying
     struct PeerDeleter {
         void operator()(wg_peer* peer) const;
     };
 
-        std::unique_ptr<wg_peer, PeerDeleter> peer{nullptr};
+    std::unique_ptr<wg_peer, PeerDeleter> peer{nullptr};
+
+    void setKey(WgKey& key, KeyType type) const;
+
 };
 
 #endif // WGPEER_H
