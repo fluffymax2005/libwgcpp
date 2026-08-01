@@ -27,6 +27,7 @@
 #include <memory>
 #include <array>
 #include <cstring>
+#include <type_traits>
 
 constexpr uint32_t WG_KEY_LEN = sizeof(wg_key);
 
@@ -49,19 +50,21 @@ inline enum wg_device_flags& operator|=(enum wg_device_flags& a, enum wg_device_
 
 class WgKey {
 public:
+    using elem_t = std::remove_extent_t<wg_key>;
+
     virtual ~WgKey() = default;
 
     virtual bool isProper() const noexcept = 0;
     virtual void generate() = 0;
 
-    const uint8_t* data() const noexcept;
+    const elem_t* data() const noexcept;
     uint32_t size() const noexcept;
-    std::shared_ptr<std::array<uint8_t, WG_KEY_LEN>> cloneData() const noexcept;
+    std::array<elem_t, WG_KEY_LEN> cloneData() const noexcept;
     bool initialize() noexcept;
     void makeZero() noexcept;
 
 protected:
-    std::shared_ptr<std::array<uint8_t, WG_KEY_LEN>> key{nullptr};
+    std::array<elem_t, WG_KEY_LEN> key{};
 
     bool isGenerated{false};
 };
