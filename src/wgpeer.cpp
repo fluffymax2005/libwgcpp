@@ -52,6 +52,26 @@ void WgPeer::setPresharedKey(WgPresharedKey &key) const {
     setKey(key, KeyType::PRESHARED);
 }
 
+void WgPeer::connectPeer(WgPeer &other) noexcept {
+    if (peer == nullptr)
+        return;
+    peer->next_peer = other.peer.get();
+}
+
+void WgPeer::disconnectPeer() noexcept {
+    if (peer == nullptr)
+        return;
+    peer->next_peer = nullptr;
+    peer->flags |= WGPEER_REMOVE_ME;
+}
+
+void WgPeer::setPersistentKeepAlive(uint16_t time) const noexcept {
+    if (peer == nullptr)
+        return;
+    peer->persistent_keepalive_interval = time;
+    peer->flags |= WGPEER_HAS_PERSISTENT_KEEPALIVE_INTERVAL;
+}
+
 bool WgPeer::initialize() noexcept {
     if (peer)
         return false;

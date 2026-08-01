@@ -24,6 +24,7 @@
 #include "wireguard.h"
 #include "wgpublickey.h"
 #include "wgpresharedkey.h"
+#include "wgallowedip.h"
 
 #include <memory>
 
@@ -36,6 +37,21 @@ inline enum wg_peer_flags operator|(enum wg_peer_flags a, enum wg_peer_flags b) 
 inline enum wg_peer_flags& operator|=(enum wg_peer_flags& a, enum wg_peer_flags b) {
     a = a | b;
     return a;
+}
+
+inline enum wg_peer_flags operator&(enum wg_peer_flags a, enum wg_peer_flags b) {
+    return static_cast<wg_peer_flags>(
+        static_cast<int>(a) & static_cast<int>(b)
+    );
+}
+
+inline enum wg_peer_flags& operator&=(enum wg_peer_flags& a, enum wg_peer_flags b) {
+    a = a & b;
+    return a;
+}
+
+inline enum wg_peer_flags operator!(enum wg_peer_flags a) {
+    return static_cast<wg_peer_flags>(a);
 }
 
 
@@ -51,8 +67,8 @@ public:
     WgPeer& operator=(WgPeer&& other) noexcept;
 
     // Empty peer if no keys provided
-    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr, Protocol proto = IPv4) noexcept;
-    WgPeer(Protocol proto = IPv4) noexcept;
+    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr, Protocol proto = Protocol::IPv4) noexcept;
+    WgPeer(Protocol proto = Protocol::IPv4) noexcept;
 
     void setPublicKey(WgPublicKey& key) const;
     void setPresharedKey(WgPresharedKey& key) const;
@@ -61,15 +77,10 @@ public:
     // Implement endpoint and integrate there
     void setEndpoint(const wg_endpoint& endpoint) const;
 
-    // TO DO
-    // Implement wg_allowedip and integrate there
-    void prependAllowedIP(const wg_allowedip& allowedip) const;
-    void pushBackAllowedIP(const wg_allowedip& allowedip) const;
-    void insertAllowedIP(const wg_allowedip& allowedip, size_t pos) const;
-    void removeAllowedIP(const wg_allowedip& allowedip) const;
-    void removeAllAllowedIPs() const;
+    void connectPeer(WgPeer& other) noexcept;
+    void disconnectPeer() noexcept;
 
-    void setPersistentKeepAlive(decltype(wg_peer::persistent_keepalive_interval) time) const;
+    void setPersistentKeepAlive(uint16_t time) const noexcept;
 
     bool initialize() noexcept;
 
