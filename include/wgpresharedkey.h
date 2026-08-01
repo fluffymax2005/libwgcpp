@@ -25,7 +25,7 @@
 
 class WgPresharedKey : public WgKey {
 public:
-    WgPresharedKey();
+    WgPresharedKey() = default;
 
     virtual bool isProper() const noexcept override;
     virtual void generate() override;

@@ -21,21 +21,17 @@
 #include "wgpublickey.h"
 
 
-WgPublicKey::WgPublicKey(std::shared_ptr<WgPrivateKey> private_key)
-    : private_key(private_key){
-    key = std::make_shared<std::array<uint8_t, WG_KEY_LEN>>();
+WgPublicKey::WgPublicKey(WgPrivateKey private_key)
+    : private_key(private_key) {
 }
 
 bool WgPublicKey::isProper() const noexcept {
-    return key && isGenerated;
+    return isGenerated;
 }
 
 void WgPublicKey::generate() {
-    if (key == nullptr)
-        return;
-    auto priv = private_key.lock();
-    if (priv == nullptr)
-        throw std::runtime_error("Private key no longer exists");
-    wg_generate_public_key(key->data(), priv->data());
+    if (wg_key_is_zero(key.data()))
+        throw std::runtime_error("Private key must be nonzero");
+    wg_generate_public_key(key.data(), private_key.data());
     isGenerated = true;
 }

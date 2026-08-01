@@ -25,6 +25,8 @@
 
 class WgPrivateKey : public WgKey {
 public:
+    WgPrivateKey() = default;
+
     virtual bool isProper() const noexcept override;
     virtual void generate() override;
 };
