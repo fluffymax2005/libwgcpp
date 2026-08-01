@@ -41,11 +41,6 @@ inline enum wg_peer_flags& operator|=(enum wg_peer_flags& a, enum wg_peer_flags 
 
 class WgPeer {
 public:
-    enum Protocol : uint8_t {
-        IPv4,
-        IPv6
-    };
-
     virtual ~WgPeer() noexcept = default;
 
     // Copying semantics is not allowed
