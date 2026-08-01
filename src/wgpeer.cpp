@@ -83,7 +83,7 @@ bool WgPeer::initialize() noexcept {
     return peer.get();
 }
 
-wg_peer* WgPeer::get() const noexcept {
+wg_peer* WgPeer::getStruct() const noexcept {
     return peer.get();
 }
 
