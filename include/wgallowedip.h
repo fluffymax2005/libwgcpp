@@ -45,6 +45,8 @@ public:
     WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;
 
     WgAllowedIP(Protocol proto = Protocol::IPv4) noexcept;
+    WgAllowedIP(const std::string& cidr) noexcept;
+    WgAllowedIP(const char* cidr) noexcept;
 
     bool operator==(const WgAllowedIP& other) const noexcept;
 
@@ -58,6 +60,8 @@ public:
 private:
     wg_allowedip ip{};
     Protocol proto;
+
+    Protocol determineInetFamily(const char* cidr) const noexcept;
 };
 
 #endif // WGALLOWEDIP_H
