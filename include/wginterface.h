@@ -47,6 +47,12 @@ class WgInterface {
 public:
     using WgKeyStringType = wg_key_b64_string;
 
+    enum InterfaceState : uint8_t {
+        UNREGISTERED,
+        POWEREDOFF,
+        POWEREDON
+    };
+
     virtual ~WgInterface() noexcept;
 
     WgInterface(const WgInterface&) = delete;
@@ -87,7 +93,7 @@ public:
 protected:
     std::unique_ptr<wg_device> device;
     std::forward_list<std::unique_ptr<WgPeer>> peers;
-    bool isInterfaceSet{false};
+    InterfaceState state{UNREGISTERED};
 
     void setKey(WgKey& key, KeyType type, bool force = false);
 
