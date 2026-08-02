@@ -33,7 +33,6 @@ enum class Protocol : uint8_t {
     IPv6
 };
 
-
 class WgAllowedIP {
 public:
     virtual ~WgAllowedIP() = default;

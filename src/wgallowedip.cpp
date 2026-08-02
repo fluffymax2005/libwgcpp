@@ -25,7 +25,7 @@ bool WgAllowedIP::operator==(const WgAllowedIP &other) const noexcept {
     if (ip.cidr != other.ip.cidr)
         return false;
 
-    if (proto == IPv4)
+    if (proto == Protocol::IPv4)
         return ip.ip4.s_addr == other.ip.ip4.s_addr;
     else
         return memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
