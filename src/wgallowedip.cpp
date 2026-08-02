@@ -48,6 +48,10 @@ void WgAllowedIP::setIPAddr(const char *addr) {
         throw WgException("IP address conversion failed. Invalid network address of specified address family provided", errno);
 }
 
+wg_allowedip* WgAllowedIP::getStruct() noexcept {
+    return &ip;
+}
+
 WgAllowedIP& WgAllowedIP::operator=(WgAllowedIP&& other) noexcept {
     if (this != &other) {
         this->proto = other.proto;
