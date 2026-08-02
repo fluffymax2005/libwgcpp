@@ -27,13 +27,88 @@ WgPeer::WgPeer(WgPeer &&other) noexcept {
     }
 }
 
-WgPeer::WgPeer(WgPublicKey *public_key, WgPresharedKey *preshared_key) noexcept {
+bool WgPeer::operator==(const WgPeer &other) const noexcept {
+    return peer && other.peer && std::memcmp(peer->public_key, other.peer->public_key, WG_KEY_LEN) == 0;
+}
+
+WgPeer::WgPeer(Protocol proto) noexcept {
+    peer = std::unique_ptr<wg_peer, PeerDeleter>(new (std::nothrow) wg_peer());
+    this->proto = proto;
+}
+
+WgPeer::WgPeer(WgPublicKey *public_key, WgPresharedKey *preshared_key, Protocol proto) noexcept {
     peer = std::unique_ptr<wg_peer, PeerDeleter>(new (std::nothrow) wg_peer());
     if (peer) {
-        if (public_key && !wg_key_is_zero(public_key->data()))
-            //peer->public_key = public_key->data();
+        if (public_key)
+            setKey(*public_key, KeyType::PUBLIC);
+        else if (preshared_key)
+            setKey(*preshared_key, KeyType::PRESHARED);
     }
 
+    this->proto = proto;
+}
+
+void WgPeer::setPublicKey(WgPublicKey &key) const {
+    setKey(key, KeyType::PUBLIC);
+}
+
+void WgPeer::setPresharedKey(WgPresharedKey &key) const {
+    setKey(key, KeyType::PRESHARED);
+}
+
+void WgPeer::connectPeer(WgPeer &other) noexcept {
+    if (peer == nullptr)
+        return;
+    peer->next_peer = other.peer.get();
+}
+
+void WgPeer::disconnectPeer() noexcept {
+    if (peer == nullptr)
+        return;
+    peer->next_peer = nullptr;
+    peer->flags |= WGPEER_REMOVE_ME;
+}
+
+void WgPeer::setPersistentKeepAlive(uint16_t time) const noexcept {
+    if (peer == nullptr)
+        return;
+    peer->persistent_keepalive_interval = time;
+    peer->flags |= WGPEER_HAS_PERSISTENT_KEEPALIVE_INTERVAL;
+}
+
+bool WgPeer::initialize() noexcept {
+    if (peer)
+        return false;
+    peer = std::unique_ptr<wg_peer, PeerDeleter>(new (std::nothrow) wg_peer());
+    return peer.get();
+}
+
+bool WgPeer::hasPublicKey(const WgPublicKey &key) const noexcept {
+    if (peer == nullptr)
+        return false;
+    return std::memcmp(peer->public_key, key.data(), WG_KEY_LEN) == 0;
+}
+
+wg_peer* WgPeer::getStruct() const noexcept {
+    return peer.get();
+}
+
+void WgPeer::setKey(WgKey &key, KeyType type) const {
+    if (peer == nullptr)
+        return;
+    if (!key.isProper())
+        throw std::invalid_argument(std::string(type == KeyType::PRESHARED ? "Preshared" : "Public") + " key must be non zero");
+
+    if (type == KeyType::PUBLIC) {
+        std::memmove(peer->public_key, key.data(), key.size());
+        peer->flags |= WGPEER_HAS_PUBLIC_KEY;
+    }
+    else if (type == KeyType::PRESHARED) {
+        std::memmove(peer->preshared_key, key.data(), key.size());
+        peer->flags |= WGPEER_HAS_PRESHARED_KEY;
+    }
+
+    key.makeZero();
 }
 
 WgPeer& WgPeer::operator=(WgPeer&& other) noexcept {
@@ -43,5 +118,14 @@ WgPeer& WgPeer::operator=(WgPeer&& other) noexcept {
     return *this;
 }
 
-
-
+void WgPeer::PeerDeleter::operator()(wg_peer *peer) const {
+    if (peer) {
+        wg_allowedip* ip = peer->first_allowedip;
+        while (ip) {
+            wg_allowedip* next = ip->next_allowedip;
+            delete ip;
+            ip = next;
+        }
+        delete peer;
+    }
+}

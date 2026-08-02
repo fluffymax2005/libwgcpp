@@ -23,8 +23,7 @@
 
 
 WgInterface::~WgInterface() noexcept {
-    if (isInterfaceSet)
-        release();
+    release();
 }
 
 WgInterface::WgInterface(WgInterface &&other) noexcept {
@@ -32,8 +31,9 @@ WgInterface::WgInterface(WgInterface &&other) noexcept {
         release();
 
         this->device = std::move(other.device);
-        this->isInterfaceSet = other.isInterfaceSet;
-        other.isInterfaceSet = false;
+        this->state = other.state;
+        other.state = UNREGISTERED;
+        this->peers = std::move(other.peers);
     }
 }
 
@@ -53,7 +53,7 @@ WgInterface::WgInterface(const char *name) noexcept {
     setName(name);
 }
 
-bool WgInterface::initialize() noexcept {
+bool WgInterface::initializeDevice() noexcept {
     if (device)
         return false;
     device = std::make_unique<wg_device>();
@@ -79,7 +79,7 @@ bool WgInterface::isListening() const noexcept {
 }
 
 bool WgInterface::isSet() const noexcept {
-    return isInterfaceSet;
+    return state == POWEREDON;
 }
 
 void WgInterface::setListeningPort(uint16_t port) const {
@@ -105,7 +105,7 @@ void WgInterface::setName(const std::string &name) noexcept {
 
 void WgInterface::setName(const char *name) noexcept {
     // Setting name is only allowed case interface is powered off and name is valid
-    if (device && !isInterfaceSet && tryValidateName(name))
+    if (device && state == UNREGISTERED && tryValidateName(name))
         std::strcpy(device->name, name);
 }
 
@@ -113,29 +113,47 @@ void WgInterface::setPrivateKey(WgPrivateKey& private_key, bool force) {
     setKey(private_key, KeyType::PRIVATE, force);
 }
 
-void WgInterface::set() noexcept(false) {
-    if (isInterfaceSet)
+void WgInterface::addPeer(std::unique_ptr<WgPeer> peer) noexcept(false) {
+    if (peer == nullptr)
         return;
-    // TO DO
-    // After WgPeer implementing make this one
+    peers.push_front(std::move(peer));
+
+    // Invalidate peers connections
+    invalidatePeers();
+
+    // Apply changes if interface is on
+    if (state == POWEREDON) {
+        set();
+    }
+}
+
+void WgInterface::removePeer(const WgPublicKey &key) noexcept(false) {
+    if (!key.isProper())
+        return;
+    auto it = std::find_if(peers.begin(), peers.end(), [&key](const std::unique_ptr<WgPeer>& ptr) {
+        return ptr->hasPublicKey(key);
+    });
+
+    peers.erase_after(it);
+    invalidatePeers();
+}
+
+void WgInterface::set() noexcept(false) {
+    if (device) {
+        if (wg_set_device(device.get()) < 0)
+            throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be set", errno);
+    }
 }
 
 void WgInterface::release() noexcept(false) {
-    poweroff();
-
-    // TO DO
-    // Implement WgPeer then manage to free data of peers
-
-
-    device.release();
-}
-
-void WgInterface::poweroff() noexcept(false) {
-    if (device && isInterfaceSet) {
+    if (device && state == POWEREDON) {
         if (wg_del_device(device->name) < 0)
             throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be deleted", errno);
-        isInterfaceSet = false;
+        state = UNREGISTERED;
     }
+
+    device.release();
+    peers.clear();
 }
 
 std::vector<std::string> WgInterface::getPeers() const {
@@ -169,12 +187,12 @@ std::vector<std::string> WgInterface::getPeers() const {
 void WgInterface::setKey(WgKey& key, KeyType type, bool force) {
     if (device == nullptr)
         return;
-    if (!force && isInterfaceSet) {
+    if (!force && state == POWEREDON) {
         throw WgException("Interface \"" + std::string(device->name) + "\" is up. Hot key change is not allowed", 1000);
     }
 
     // Set key anyway
-    // Private key request automatically set public one
+    // Private key request automatically sets public one
     if (type == KeyType::PRIVATE) {
         std::memcpy(device->private_key, key.data(), WG_KEY_LEN);
         device->flags |= WGDEVICE_HAS_PRIVATE_KEY;
@@ -190,13 +208,44 @@ bool WgInterface::tryValidateName(const char *name) const noexcept {
     return name && std::strlen(name) > 0 && std::strlen(name) < IFNAMSIZ;
 }
 
+void WgInterface::invalidatePeers() const noexcept {
+    if (device == nullptr)
+        return;
+
+
+    if (peers.empty()) {
+        // Update links case there no peers left
+        device->first_peer = nullptr;
+        device->last_peer = nullptr;
+    } else {
+        device->first_peer = peers.front()->getStruct();
+
+        auto first = peers.begin();
+        auto second = std::next(first);
+
+        while (second != peers.end()) {
+            WgPeer& p1 = *first->get();
+            WgPeer& p2 = *second->get();
+            p1.connectPeer(p2);
+
+            ++first;
+            ++second;
+        }
+
+        WgPeer& lastPeer = *first->get();
+        lastPeer.disconnectPeer();
+        device->last_peer = lastPeer.getStruct();
+    }
+
+}
+
 WgInterface& WgInterface::operator=(WgInterface&& other) noexcept {
     if (this != &other) {
         release();
 
         this->device = std::move(other.device);
-        this->isInterfaceSet = other.isInterfaceSet;
-        other.isInterfaceSet = false;
+        this->state = other.state;
+        other.state = UNREGISTERED;
     }
 
     return *this;

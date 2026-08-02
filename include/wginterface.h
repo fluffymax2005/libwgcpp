@@ -24,14 +24,17 @@
 #include "wgexception.h"
 #include "wgpublickey.h"
 #include "wgpresharedkey.h"
+#include "wgpeer.h"
 
 #include <wireguard.h>
 #include <string>
 #include <cstdint>
 #include <memory>
+#include <forward_list>
 #include <vector>
 #include <cstring>
 #include <cerrno>
+#include <algorithm>
 
 enum class ThreadSafety : uint8_t {
     SAFE,
@@ -45,6 +48,12 @@ class WgInterface {
 public:
     using WgKeyStringType = wg_key_b64_string;
 
+    enum InterfaceState : uint8_t {
+        UNREGISTERED,
+        POWEREDOFF,
+        POWEREDON
+    };
+
     virtual ~WgInterface() noexcept;
 
     WgInterface(const WgInterface&) = delete;
@@ -56,7 +65,7 @@ public:
     WgInterface(const std::string& name) noexcept;
     WgInterface(const char* name) noexcept;
 
-    bool initialize() noexcept;
+    bool initializeDevice() noexcept;
 
     bool inline hasDevice() const noexcept;
     bool inline hasPrivateKey() const noexcept;
@@ -73,22 +82,24 @@ public:
 
     // TO DO
     // Change wg_peer with self implemented version later
-    virtual void addPeer(wg_peer peer) noexcept(false);
+    virtual void addPeer(std::unique_ptr<WgPeer> peer) noexcept(false);
+    virtual void removePeer(const WgPublicKey& key) noexcept(false);
 
     virtual void set() noexcept(false);
     virtual void release() noexcept(false);
-    virtual void poweroff() noexcept(false);
 
     std::vector<std::string> getPeers() const;
 
 protected:
     std::unique_ptr<wg_device> device;
-    bool isInterfaceSet{false};
+    std::forward_list<std::unique_ptr<WgPeer>> peers;
+    InterfaceState state{UNREGISTERED};
 
     void setKey(WgKey& key, KeyType type, bool force = false);
 
 private:
     inline bool tryValidateName(const char* name) const noexcept;
+    void invalidatePeers() const noexcept;
 };
 
 #endif
