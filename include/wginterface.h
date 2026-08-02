@@ -86,7 +86,6 @@ public:
 
     virtual void set() noexcept(false);
     virtual void release() noexcept(false);
-    virtual void poweroff() noexcept(false);
 
     std::vector<std::string> getPeers() const;
 
