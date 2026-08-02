@@ -85,6 +85,7 @@ public:
     void setPersistentKeepAlive(uint16_t time) const noexcept;
 
     bool initialize() noexcept;
+    bool hasPublicKey(const WgPublicKey& key) const noexcept;
 
     wg_peer* getStruct() const noexcept;
 

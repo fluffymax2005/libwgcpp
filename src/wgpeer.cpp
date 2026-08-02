@@ -83,6 +83,12 @@ bool WgPeer::initialize() noexcept {
     return peer.get();
 }
 
+bool WgPeer::hasPublicKey(const WgPublicKey &key) const noexcept {
+    if (peer == nullptr)
+        return false;
+    return std::memcmp(peer->public_key, key.data(), WG_KEY_LEN) == 0;
+}
+
 wg_peer* WgPeer::getStruct() const noexcept {
     return peer.get();
 }
