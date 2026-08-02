@@ -11,7 +11,7 @@ WgAllowedIP::WgAllowedIP(WgAllowedIP &&other) noexcept {
 
 WgAllowedIP::WgAllowedIP(Protocol proto) noexcept
     : proto{proto} {
-    if (proto == IPv4) {
+    if (proto == Protocol::IPv4) {
         ip.family = AF_INET;
     } else {
         ip.family = AF_INET6;
@@ -25,14 +25,14 @@ bool WgAllowedIP::operator==(const WgAllowedIP &other) const noexcept {
     if (ip.cidr != other.ip.cidr)
         return false;
 
-    if (proto == IPv4)
+    if (proto == Protocol::IPv4)
         return ip.ip4.s_addr == other.ip.ip4.s_addr;
     else
         return memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
 }
 
 void WgAllowedIP::setCIDR(uint8_t cidr) noexcept {
-    if (proto == IPv4) {
+    if (proto == Protocol::IPv4) {
         if (cidr <= 24)
             ip.cidr = cidr;
         else
@@ -48,7 +48,7 @@ void WgAllowedIP::setIPAddr(const std::string& addr) {
 
 void WgAllowedIP::setIPAddr(const char *addr) {
     int8_t code;
-    if (proto == IPv4)
+    if (proto == Protocol::IPv4)
         code = inet_pton(ip.family, addr, &ip.ip4);
     else
         code = inet_pton(ip.family, addr, &ip.ip6);

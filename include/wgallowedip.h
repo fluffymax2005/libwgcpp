@@ -28,13 +28,13 @@
 #include <cstring>
 #include <arpa/inet.h>
 
+enum class Protocol : uint8_t {
+    IPv4,
+    IPv6
+};
+
 class WgAllowedIP {
 public:
-    enum Protocol : uint8_t {
-        IPv4,
-        IPv6
-    };
-
     virtual ~WgAllowedIP() = default;
 
     // Class owns next elem so restricted to copy itself to prevent unexpected destruction
@@ -44,7 +44,7 @@ public:
     WgAllowedIP(WgAllowedIP&& other) noexcept;
     WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;
 
-    WgAllowedIP(Protocol proto = IPv4) noexcept;
+    WgAllowedIP(Protocol proto = Protocol::IPv4) noexcept;
 
     bool operator==(const WgAllowedIP& other) const noexcept;
 
