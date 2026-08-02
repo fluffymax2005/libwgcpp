@@ -38,8 +38,8 @@ public:
     virtual ~WgAllowedIP() = default;
 
     // Class owns next elem so restricted to copy itself to prevent unexpected destruction
-    WgAllowedIP(const WgAllowedIP&) = delete;
-    WgAllowedIP& operator=(const WgAllowedIP&) = delete;
+    WgAllowedIP(const WgAllowedIP& other) noexcept = default;
+    WgAllowedIP& operator=(const WgAllowedIP& other) noexcept = default;
 
     WgAllowedIP(WgAllowedIP&& other) noexcept;
     WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;
