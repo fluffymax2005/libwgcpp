@@ -52,6 +52,8 @@ public:
     void setIPAddr(const std::string& addr);
     void setIPAddr(const char* addr);
 
+    wg_allowedip* getStruct() noexcept;
+
 private:
     wg_allowedip ip{};
     Protocol proto;
