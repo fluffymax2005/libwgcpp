@@ -134,7 +134,8 @@ void WgInterface::removePeer(const WgPublicKey &key) noexcept(false) {
         return ptr->hasPublicKey(key);
     });
 
-    std::erase(it);
+    peers.erase_after(it);
+    invalidatePeers();
 }
 
 void WgInterface::set() noexcept(false) {

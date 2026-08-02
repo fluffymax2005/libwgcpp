@@ -34,6 +34,7 @@
 #include <vector>
 #include <cstring>
 #include <cerrno>
+#include <algorithm>
 
 enum class ThreadSafety : uint8_t {
     SAFE,
