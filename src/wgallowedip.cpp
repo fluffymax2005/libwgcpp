@@ -19,6 +19,18 @@ WgAllowedIP::WgAllowedIP(Protocol proto) noexcept
 
 }
 
+bool WgAllowedIP::operator==(const WgAllowedIP &other) const noexcept {
+    if (ip.family != other.ip.family)
+        return false;
+    if (ip.cidr != other.ip.cidr)
+        return false;
+
+    if (proto == IPv4)
+        return ip.ip4.s_addr == other.ip.ip4.s_addr;
+    else
+        return memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
+}
+
 void WgAllowedIP::setCIDR(uint8_t cidr) noexcept {
     if (proto == IPv4) {
         if (cidr <= 24)

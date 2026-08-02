@@ -25,6 +25,7 @@
 #include "wgexception.h"
 
 #include <string>
+#include <cstring>
 #include <arpa/inet.h>
 
 class WgAllowedIP {
@@ -44,6 +45,8 @@ public:
     WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;
 
     WgAllowedIP(Protocol proto = IPv4) noexcept;
+
+    bool operator==(const WgAllowedIP& other) const noexcept;
 
     void setCIDR(uint8_t cidr) noexcept;
 
