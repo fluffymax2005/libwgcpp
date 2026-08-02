@@ -30,10 +30,6 @@ void WgAllowedIP::setCIDR(uint8_t cidr) noexcept {
     }
 }
 
-void WgAllowedIP::setNextElem(WgAllowedIP& elem) noexcept {
-    ip.next_allowedip = &elem.ip;
-}
-
 void WgAllowedIP::setIPAddr(const std::string& addr) {
     setIPAddr(addr.c_str());
 }

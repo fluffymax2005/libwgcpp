@@ -46,7 +46,6 @@ public:
     WgAllowedIP(Protocol proto = IPv4) noexcept;
 
     void setCIDR(uint8_t cidr) noexcept;
-    void setNextElem(WgAllowedIP& elem) noexcept;
 
     void setIPAddr(const std::string& addr);
     void setIPAddr(const char* addr);
