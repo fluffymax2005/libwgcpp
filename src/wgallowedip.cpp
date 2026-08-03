@@ -3,23 +3,39 @@
 
 WgAllowedIP::WgAllowedIP(WgAllowedIP &&other) noexcept {
     if (this != &other) {
-        this->proto = other.proto;
         this->ip = other.ip;
-        other.ip = wg_allowedip();
+        other.ip.next_allowedip = nullptr;
     }
 }
 
-WgAllowedIP::WgAllowedIP(Protocol proto) noexcept
-    : proto{proto} {
-    if (proto == Protocol::IPv4) {
-        ip.family = AF_INET;
-    } else {
-        ip.family = AF_INET6;
-    }
-
+WgAllowedIP::WgAllowedIP() noexcept {
+    // Default is "0.0.0.0/0"
+    ip.family = AF_INET;
+    ip.ip4.s_addr = 0;
+    ip.cidr = 0;
 }
 
-WgAllowedIP::WgAllowedIP(const std::string& cidr) noexcept {
+WgAllowedIP::WgAllowedIP(const std::string& cidr) noexcept(false) {
+    setCIDR(cidr);
+}
+
+WgAllowedIP::WgAllowedIP(const char* cidr) noexcept(false) {
+    setCIDR(cidr);
+}
+
+bool WgAllowedIP::operator==(const WgAllowedIP &other) const noexcept {
+    if (ip.family != other.ip.family)
+        return false;
+    if (ip.cidr != other.ip.cidr)
+        return false;
+
+    if (ip.family == AF_INET)
+        return ip.ip4.s_addr == other.ip.ip4.s_addr;
+    else
+        return memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
+}
+
+void WgAllowedIP::setCIDR(const std::string& cidr) noexcept(false) {
     // Simple check (not sure for 100%) of CIDR notation
     const auto slash_pos = cidr.find_first_of('/');
 
@@ -34,34 +50,36 @@ WgAllowedIP::WgAllowedIP(const std::string& cidr) noexcept {
         try {
             prefix_len = std::stoi(cidr.substr(slash_pos + 1));
         } catch (...) {
-            // Default value
-            prefix_len = 0;
+            throw std::invalid_argument("CIDR \"" + cidr + "\" is not valid. Prefix conversion failed");
         }
+
+        if (prefix_len < 0 || prefix_len > 128)
+            throw std::invalid_argument("CIDR \"" + cidr + "\" is not valid. Prefix value is not in range [0; 128]");
+
     } else {
-        addr_part = cidr;
+        throw std::invalid_argument("CIDR \"" + cidr + "\" is not valid. Prefix is not found");
     }
 
-    proto = determineInetFamily(addr_part.c_str());
-    if (proto == Protocol::IPv4)
-        ip.family = AF_INET;
-    else
-        ip.family = AF_INET6;
+    ip.family = static_cast<uint16_t>(determineInetFamily(addr_part.c_str()));
 
     void* buf;
-    if (proto == Protocol::IPv4)
+    if (ip.family == AF_INET) {
+        if (prefix_len > 32)
+            throw std::invalid_argument("CIDR \"" + cidr + "\" is not valid. IPv4 prefix cannot be more than 32");
         buf = &ip.ip4;
-    else
+    } else {
         buf = &ip.ip6;
+    }
 
-    // If conversion failed then UB
+
+    // If conversion failed then object is in invalid state
     if (inet_pton(ip.family, addr_part.c_str(), buf) != 1)
-        return;
+        throw std::invalid_argument("CIDR \"" + cidr + "\" is not valid. CIDR from text to binary conversion failed");
 
-    setCIDR(prefix_len);
-
+    ip.cidr = prefix_len;
 }
 
-WgAllowedIP::WgAllowedIP(const char* cidr) noexcept {
+void WgAllowedIP::setCIDR(const char* cidr) noexcept(false) {
     // Simple check (not sure for 100%) of CIDR notation
     const auto* slash_pos = std::strchr(cidr, '/');
 
@@ -75,68 +93,31 @@ WgAllowedIP::WgAllowedIP(const char* cidr) noexcept {
         // Prefix len might exist and must be tried to be extracted
         char* end;
         prefix_len = strtol(slash_pos + 1, &end, 10);
-        if (*end != '\0' || prefix_len < 0 || prefix_len > 128)
-            // Default value
-            prefix_len = 0;
+
+        if (*end != '\0')
+            throw std::invalid_argument(std::string("CIDR \"") + cidr + "\" is not valid. Prefix conversion failed");
+        if (prefix_len < 0 || prefix_len > 128)
+            throw std::invalid_argument(std::string("CIDR \"") + cidr + "\" is not valid. Prefix value is not in range [0; 128]");
     } else {
-        std::strcpy(addr_part, cidr);
+        throw std::invalid_argument(std::string("CIDR \"") + cidr + "\" is not valid. Prefix is not found");
     }
 
-    proto = determineInetFamily(addr_part);
-    if (proto == Protocol::IPv4)
-        ip.family = AF_INET;
-    else
-        ip.family = AF_INET6;
+    ip.family = static_cast<uint16_t>(determineInetFamily(addr_part));
 
     void* buf;
-    if (proto == Protocol::IPv4)
+    if (ip.family == AF_INET) {
+        if (prefix_len > 32)
+            throw std::invalid_argument(std::string("CIDR \"") + cidr + "\" is not valid. IPv4 prefix cannot be more than 32");
         buf = &ip.ip4;
-    else
+    } else {
         buf = &ip.ip6;
+    }
 
     // If conversion failed then UB
     if (inet_pton(ip.family, addr_part, buf) != 1)
-        return;
+        throw std::invalid_argument(std::string("CIDR \"") + cidr + "\" is not valid. CIDR from text to binary conversion failed");
 
-    setCIDR(prefix_len);
-
-}
-
-bool WgAllowedIP::operator==(const WgAllowedIP &other) const noexcept {
-    if (ip.family != other.ip.family)
-        return false;
-    if (ip.cidr != other.ip.cidr)
-        return false;
-
-    if (proto == Protocol::IPv4)
-        return ip.ip4.s_addr == other.ip.ip4.s_addr;
-    else
-        return memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
-}
-
-void WgAllowedIP::setCIDR(uint8_t cidr) noexcept {
-    if (proto == Protocol::IPv4) {
-        if (cidr <= 24)
-            ip.cidr = cidr;
-        else
-            ip.cidr = 0;
-    } else {
-        ip.cidr = cidr;
-    }
-}
-
-void WgAllowedIP::setIPAddr(const std::string& addr) {
-    setIPAddr(addr.c_str());
-}
-
-void WgAllowedIP::setIPAddr(const char *addr) {
-    int8_t code;
-    if (proto == Protocol::IPv4)
-        code = inet_pton(ip.family, addr, &ip.ip4);
-    else
-        code = inet_pton(ip.family, addr, &ip.ip6);
-    if (code == 0)
-        throw WgException("IP address conversion failed. Invalid network address of specified address family provided", errno);
+    ip.cidr = prefix_len;
 }
 
 wg_allowedip* WgAllowedIP::getStruct() noexcept {
@@ -157,9 +138,8 @@ Protocol WgAllowedIP::determineInetFamily(const char* cidr) const noexcept {
 
 WgAllowedIP& WgAllowedIP::operator=(WgAllowedIP&& other) noexcept {
     if (this != &other) {
-        this->proto = other.proto;
         this->ip = other.ip;
-        other.ip = wg_allowedip();
+        other.ip.next_allowedip = nullptr;
     }
 
     return *this;

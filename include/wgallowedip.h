@@ -29,37 +29,34 @@
 #include <arpa/inet.h>
 
 enum class Protocol : uint8_t {
-    IPv4,
-    IPv6
+    IPv4 = AF_INET,
+    IPv6 = AF_INET6
 };
 
 class WgAllowedIP {
 public:
-    virtual ~WgAllowedIP() = default;
+    ~WgAllowedIP() = default;
 
     // Class owns next elem so restricted to copy itself to prevent unexpected destruction
-    WgAllowedIP(const WgAllowedIP& other) noexcept = default;
-    WgAllowedIP& operator=(const WgAllowedIP& other) noexcept = default;
+    WgAllowedIP(const WgAllowedIP& other) noexcept = delete;
+    WgAllowedIP& operator=(const WgAllowedIP& other) noexcept = delete;
 
     WgAllowedIP(WgAllowedIP&& other) noexcept;
     WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;
 
-    WgAllowedIP(Protocol proto = Protocol::IPv4) noexcept;
-    WgAllowedIP(const std::string& cidr) noexcept;
-    WgAllowedIP(const char* cidr) noexcept;
+    WgAllowedIP() noexcept;
+    explicit WgAllowedIP(const std::string& cidr) noexcept(false);
+    explicit WgAllowedIP(const char* cidr) noexcept(false);
 
     bool operator==(const WgAllowedIP& other) const noexcept;
 
-    void setCIDR(uint8_t cidr) noexcept;
-
-    void setIPAddr(const std::string& addr);
-    void setIPAddr(const char* addr);
+    void setCIDR(const std::string& cidr) noexcept(false);
+    void setCIDR(const char* cidr) noexcept(false);
 
     wg_allowedip* getStruct() noexcept;
 
 private:
     wg_allowedip ip{};
-    Protocol proto;
 
     Protocol determineInetFamily(const char* cidr) const noexcept;
 };
