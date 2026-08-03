@@ -25,36 +25,48 @@
 #include "wgexception.h"
 
 #include <string>
+#include <cstring>
+#include <charconv>
 #include <arpa/inet.h>
 
 enum class Protocol : uint8_t {
-    IPv4,
-    IPv6
+    IPv4 = AF_INET,
+    IPv6 = AF_INET6
 };
-
 
 class WgAllowedIP {
 public:
-    virtual ~WgAllowedIP() = default;
+    ~WgAllowedIP() = default;
 
     // Class owns next elem so restricted to copy itself to prevent unexpected destruction
-    WgAllowedIP(const WgAllowedIP&) = delete;
-    WgAllowedIP& operator=(const WgAllowedIP&) = delete;
+    WgAllowedIP(const WgAllowedIP& other) noexcept = delete;
+    WgAllowedIP& operator=(const WgAllowedIP& other) noexcept = delete;
 
     WgAllowedIP(WgAllowedIP&& other) noexcept;
     WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;
 
-    WgAllowedIP(Protocol proto = Protocol::IPv4) noexcept;
+    WgAllowedIP() noexcept;
+    explicit WgAllowedIP(const std::string& cidr);
+    explicit WgAllowedIP(const char* cidr);
 
-    void setCIDR(uint8_t cidr) noexcept;
-    void setNextElem(WgAllowedIP& elem) noexcept;
+    bool operator==(const WgAllowedIP& other) const noexcept;
 
-    void setIPAddr(const std::string& addr);
-    void setIPAddr(const char* addr);
+    void setCIDR(const std::string& cidr);
+    void setCIDR(const char* cidr);
+
+    wg_allowedip* getStruct() noexcept;
+    void connect(wg_allowedip* other) noexcept;
+    void disconnect() noexcept;
+
+    inline Protocol getProto() const noexcept;
+    std::string getAddr() const;
+    std::string getCIDR() const;
+    inline uint8_t getCIDRNumber() const noexcept;
 
 private:
     wg_allowedip ip{};
-    Protocol proto;
+
+    Protocol determineInetFamily(const char* cidr) const noexcept;
 };
 
 #endif // WGALLOWEDIP_H

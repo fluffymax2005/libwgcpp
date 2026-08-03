@@ -27,6 +27,8 @@
 #include "wgallowedip.h"
 
 #include <memory>
+#include <forward_list>
+#include <algorithm>
 
 inline enum wg_peer_flags operator|(enum wg_peer_flags a, enum wg_peer_flags b) {
     return static_cast<wg_peer_flags>(
@@ -57,7 +59,7 @@ inline enum wg_peer_flags operator!(enum wg_peer_flags a) {
 
 class WgPeer {
 public:
-    virtual ~WgPeer() noexcept = default;
+    ~WgPeer() noexcept = default;
 
     // Copying semantics is not allowed
     WgPeer(const WgPeer&) noexcept = delete;
@@ -69,8 +71,8 @@ public:
     bool operator==(const WgPeer& other) const noexcept;
 
     // Empty peer if no keys provided
-    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr, Protocol proto = Protocol::IPv4) noexcept;
-    WgPeer(Protocol proto = Protocol::IPv4) noexcept;
+    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr) noexcept;
+    WgPeer() noexcept;
 
     void setPublicKey(WgPublicKey& key) const;
     void setPresharedKey(WgPresharedKey& key) const;
@@ -84,22 +86,20 @@ public:
 
     void setPersistentKeepAlive(uint16_t time) const noexcept;
 
-    bool initialize() noexcept;
     bool hasPublicKey(const WgPublicKey& key) const noexcept;
+
+    void addAllowedIP(WgAllowedIP&& ip);
+    void removeAllowedIP(const std::string& cidr) noexcept;
 
     wg_peer* getStruct() const noexcept;
 
 private:
-    Protocol proto;
-
-    // Custom deleter for convenient peer struct destroying
-    struct PeerDeleter {
-        void operator()(wg_peer* peer) const;
-    };
-
-    std::unique_ptr<wg_peer, PeerDeleter> peer{nullptr};
+    std::unique_ptr<wg_peer> peer;
+    std::forward_list<std::unique_ptr<WgAllowedIP>> ips;
 
     void setKey(WgKey& key, KeyType type) const;
+
+    void invalidateAllowedIPs() noexcept;
 
 };
 
