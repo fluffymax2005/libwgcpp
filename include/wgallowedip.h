@@ -26,6 +26,7 @@
 
 #include <string>
 #include <cstring>
+#include <charconv>
 #include <arpa/inet.h>
 
 enum class Protocol : uint8_t {
@@ -53,20 +54,19 @@ public:
     void setCIDR(const std::string& cidr);
     void setCIDR(const char* cidr);
 
-    inline Protocol getProto() const noexcept;
-    std::string getAddr() const;
-    inline uint8_t getCIDRNumber() const noexcept;
-
-private:
-    friend class WgPeer;
-
-    wg_allowedip ip{};
-
-    Protocol determineInetFamily(const char* cidr) const noexcept;
     wg_allowedip* getStruct() noexcept;
     void connect(wg_allowedip* other) noexcept;
     void disconnect() noexcept;
 
+    inline Protocol getProto() const noexcept;
+    std::string getAddr() const;
+    std::string getCIDR() const;
+    inline uint8_t getCIDRNumber() const noexcept;
+
+private:
+    wg_allowedip ip{};
+
+    Protocol determineInetFamily(const char* cidr) const noexcept;
 };
 
 #endif // WGALLOWEDIP_H

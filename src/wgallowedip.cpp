@@ -137,6 +137,10 @@ std::string WgAllowedIP::getAddr() const {
     return addr;
 }
 
+std::string WgAllowedIP::getCIDR() const {
+    return getAddr() + '/' + std::to_string(ip.cidr);
+}
+
 uint8_t WgAllowedIP::getCIDRNumber() const noexcept {
     return ip.cidr;
 }
