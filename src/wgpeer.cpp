@@ -21,13 +21,14 @@
 #include "wgpeer.h"
 
 
-WgPeer::WgPeer(WgPeer &&other) noexcept {
+WgPeer::WgPeer(WgPeer&& other) noexcept {
     if (this != &other) {
         peer = std::move(other.peer);
+        ips = std::move(other.ips);
     }
 }
 
-bool WgPeer::operator==(const WgPeer &other) const noexcept {
+bool WgPeer::operator==(const WgPeer& other) const noexcept {
     return peer && other.peer && std::memcmp(peer->public_key, other.peer->public_key, WG_KEY_LEN) == 0;
 }
 
@@ -144,6 +145,7 @@ void WgPeer::invalidateAllowedIPs() noexcept {
 WgPeer& WgPeer::operator=(WgPeer&& other) noexcept {
     if (this != &other) {
         peer = std::move(other.peer);
+        ips = std::move(other.ips);
     }
     return *this;
 }

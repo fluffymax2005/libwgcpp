@@ -65,8 +65,6 @@ public:
     WgInterface(const std::string& name) noexcept;
     WgInterface(const char* name) noexcept;
 
-    bool initializeDevice() noexcept;
-
     bool inline hasDevice() const noexcept;
     bool inline hasPrivateKey() const noexcept;
     bool inline isListening() const noexcept;
@@ -78,15 +76,15 @@ public:
     virtual void setName(const std::string& name) noexcept;
     virtual void setName(const char* name) noexcept;
 
-    virtual void setPrivateKey(WgPrivateKey& private_key, bool force = false);
+    virtual void setPrivateKey(WgPrivateKey&& private_key, bool force = false);
 
     // TO DO
     // Change wg_peer with self implemented version later
-    virtual void addPeer(std::unique_ptr<WgPeer> peer) noexcept(false);
-    virtual void removePeer(const WgPublicKey& key) noexcept(false);
+    virtual void addPeer(WgPeer&& peer);
+    virtual void removePeer(const WgPublicKey& key);
 
-    virtual void set() noexcept(false);
-    virtual void release() noexcept(false);
+    virtual void set();
+    virtual void release();
 
     std::vector<std::string> getPeers() const;
 
@@ -95,7 +93,7 @@ protected:
     std::forward_list<std::unique_ptr<WgPeer>> peers;
     InterfaceState state{UNREGISTERED};
 
-    void setKey(WgKey& key, KeyType type, bool force = false);
+    void setKey(WgKey&& key, KeyType type, bool force = false);
 
 private:
     inline bool tryValidateName(const char* name) const noexcept;

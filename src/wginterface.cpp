@@ -45,19 +45,12 @@ WgInterface::WgInterface(const std::string &name) noexcept {
     setName(name);
 }
 
-WgInterface::WgInterface(const char *name) noexcept {
+WgInterface::WgInterface(const char* name) noexcept {
     device = std::make_unique<wg_device>();
     if (device == nullptr)
         return;
 
     setName(name);
-}
-
-bool WgInterface::initializeDevice() noexcept {
-    if (device)
-        return false;
-    device = std::make_unique<wg_device>();
-    return device.get();
 }
 
 bool WgInterface::hasDevice() const noexcept {
@@ -109,14 +102,14 @@ void WgInterface::setName(const char *name) noexcept {
         std::strcpy(device->name, name);
 }
 
-void WgInterface::setPrivateKey(WgPrivateKey& private_key, bool force) {
-    setKey(private_key, KeyType::PRIVATE, force);
+void WgInterface::setPrivateKey(WgPrivateKey&& private_key, bool force) {
+    setKey(std::move(private_key), KeyType::PRIVATE, force);
 }
 
-void WgInterface::addPeer(std::unique_ptr<WgPeer> peer) noexcept(false) {
+void WgInterface::addPeer(WgPeer&& peer) {
     if (peer == nullptr)
         return;
-    peers.push_front(std::move(peer));
+    peers.push_front(std::make_unique<WgPeer>(std::move(peer)));
 
     // Invalidate peers connections
     invalidatePeers();
@@ -127,25 +120,25 @@ void WgInterface::addPeer(std::unique_ptr<WgPeer> peer) noexcept(false) {
     }
 }
 
-void WgInterface::removePeer(const WgPublicKey &key) noexcept(false) {
+void WgInterface::removePeer(const WgPublicKey& key) {
     if (!key.isProper())
         return;
     auto it = std::find_if(peers.begin(), peers.end(), [&key](const std::unique_ptr<WgPeer>& ptr) {
         return ptr->hasPublicKey(key);
     });
 
-    peers.erase_after(it);
+    std::erase(peers, it);
     invalidatePeers();
 }
 
-void WgInterface::set() noexcept(false) {
+void WgInterface::set() {
     if (device) {
         if (wg_set_device(device.get()) < 0)
             throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be set", errno);
     }
 }
 
-void WgInterface::release() noexcept(false) {
+void WgInterface::release() {
     if (device && state == POWEREDON) {
         if (wg_del_device(device->name) < 0)
             throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be deleted", errno);
@@ -184,7 +177,7 @@ std::vector<std::string> WgInterface::getPeers() const {
     return peers;
 }
 
-void WgInterface::setKey(WgKey& key, KeyType type, bool force) {
+void WgInterface::setKey(WgKey&& key, KeyType type, bool force) {
     if (device == nullptr)
         return;
     if (!force && state == POWEREDON) {
@@ -226,7 +219,7 @@ void WgInterface::invalidatePeers() const noexcept {
         while (second != peers.end()) {
             WgPeer& p1 = *first->get();
             WgPeer& p2 = *second->get();
-            p1.connectPeer(p2);
+            p1.connectPeer(p2.getStruct());
 
             ++first;
             ++second;
