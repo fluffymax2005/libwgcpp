@@ -56,7 +56,6 @@ inline enum wg_peer_flags operator!(enum wg_peer_flags a) {
     return static_cast<wg_peer_flags>(a);
 }
 
-
 class WgPeer {
 public:
     ~WgPeer() noexcept = default;
@@ -71,17 +70,17 @@ public:
     bool operator==(const WgPeer& other) const noexcept;
 
     // Empty peer if no keys provided
-    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr) noexcept;
-    WgPeer() noexcept;
+    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr);
+    WgPeer();
 
-    void setPublicKey(WgPublicKey& key) const;
-    void setPresharedKey(WgPresharedKey& key) const;
+    void setPublicKey(WgPublicKey&& key) const;
+    void setPresharedKey(WgPresharedKey&& key) const;
 
     // TO DO
     // Implement endpoint and integrate there
     void setEndpoint(const wg_endpoint& endpoint) const;
 
-    void connectPeer(WgPeer& other) noexcept;
+    void connectPeer(wg_peer* other) noexcept;
     void disconnectPeer() noexcept;
 
     void setPersistentKeepAlive(uint16_t time) const noexcept;
@@ -97,7 +96,7 @@ private:
     std::unique_ptr<wg_peer> peer;
     std::forward_list<std::unique_ptr<WgAllowedIP>> ips;
 
-    void setKey(WgKey& key, KeyType type) const;
+    void setKey(WgKey&& key, KeyType type) const;
 
     void invalidateAllowedIPs() noexcept;
 

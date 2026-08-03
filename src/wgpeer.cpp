@@ -31,34 +31,30 @@ bool WgPeer::operator==(const WgPeer &other) const noexcept {
     return peer && other.peer && std::memcmp(peer->public_key, other.peer->public_key, WG_KEY_LEN) == 0;
 }
 
-WgPeer::WgPeer() noexcept {
-    peer = std::unique_ptr<wg_peer>(new (std::nothrow) wg_peer());
+WgPeer::WgPeer()
+    : peer{std::make_unique<wg_peer>()} {
 }
 
-WgPeer::WgPeer(WgPublicKey* public_key, WgPresharedKey* preshared_key) noexcept {
-    peer = std::unique_ptr<wg_peer>(new (std::nothrow) wg_peer());
-    if (peer) {
-        if (public_key)
-            setKey(*public_key, KeyType::PUBLIC);
-        else if (preshared_key)
-            setKey(*preshared_key, KeyType::PRESHARED);
-    }
-
-    this->proto = proto;
+WgPeer::WgPeer(WgPublicKey* public_key, WgPresharedKey* preshared_key) {
+    peer = std::make_unique<wg_peer>();
+    if (public_key)
+        setKey(std::move(*public_key), KeyType::PUBLIC);
+    if (preshared_key)
+        setKey(std::move(*preshared_key), KeyType::PRESHARED);
 }
 
-void WgPeer::setPublicKey(WgPublicKey &key) const {
-    setKey(key, KeyType::PUBLIC);
+void WgPeer::setPublicKey(WgPublicKey&& key) const {
+    setKey(std::move(key), KeyType::PUBLIC);
 }
 
-void WgPeer::setPresharedKey(WgPresharedKey &key) const {
-    setKey(key, KeyType::PRESHARED);
+void WgPeer::setPresharedKey(WgPresharedKey&& key) const {
+    setKey(std::move(key), KeyType::PRESHARED);
 }
 
-void WgPeer::connectPeer(WgPeer &other) noexcept {
-    if (peer == nullptr || other.peer.get() == nullptr)
+void WgPeer::connectPeer(wg_peer* other) noexcept {
+    if (peer == nullptr || other == nullptr)
         return;
-    peer->next_peer = other.peer.get();
+    peer->next_peer = other;
 }
 
 void WgPeer::disconnectPeer() noexcept {
@@ -95,10 +91,7 @@ void WgPeer::addAllowedIP(WgAllowedIP&& ip) {
     if (peer == nullptr)
         return;
 
-    auto ptr = std::make_unique<WgAllowedIP>(std::move(ip));
-    if (ptr == nullptr)
-        throw std::bad_alloc();
-    ips.push_front(std::move(ptr));
+    ips.push_front(std::make_unique<WgAllowedIP>(std::move(ip)));
 
     invalidateAllowedIPs();
 }
@@ -107,7 +100,7 @@ wg_peer* WgPeer::getStruct() const noexcept {
     return peer.get();
 }
 
-void WgPeer::setKey(WgKey &key, KeyType type) const {
+void WgPeer::setKey(WgKey&& key, KeyType type) const {
     if (peer == nullptr)
         return;
     if (!key.isProper())
