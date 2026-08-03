@@ -15,11 +15,11 @@ WgAllowedIP::WgAllowedIP() noexcept {
     ip.cidr = 0;
 }
 
-WgAllowedIP::WgAllowedIP(const std::string& cidr) noexcept(false) {
+WgAllowedIP::WgAllowedIP(const std::string& cidr) {
     setCIDR(cidr);
 }
 
-WgAllowedIP::WgAllowedIP(const char* cidr) noexcept(false) {
+WgAllowedIP::WgAllowedIP(const char* cidr) {
     setCIDR(cidr);
 }
 
@@ -35,7 +35,7 @@ bool WgAllowedIP::operator==(const WgAllowedIP &other) const noexcept {
         return memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
 }
 
-void WgAllowedIP::setCIDR(const std::string& cidr) noexcept(false) {
+void WgAllowedIP::setCIDR(const std::string& cidr) {
     // Simple check (not sure for 100%) of CIDR notation
     const auto slash_pos = cidr.find_first_of('/');
 
@@ -79,7 +79,7 @@ void WgAllowedIP::setCIDR(const std::string& cidr) noexcept(false) {
     ip.cidr = prefix_len;
 }
 
-void WgAllowedIP::setCIDR(const char* cidr) noexcept(false) {
+void WgAllowedIP::setCIDR(const char* cidr) {
     // Simple check (not sure for 100%) of CIDR notation
     const auto* slash_pos = std::strchr(cidr, '/');
 
@@ -122,6 +122,15 @@ void WgAllowedIP::setCIDR(const char* cidr) noexcept(false) {
 
 wg_allowedip* WgAllowedIP::getStruct() noexcept {
     return &ip;
+}
+
+void WgAllowedIP::connect(wg_allowedip* other) noexcept {
+    if (other)
+        ip.next_allowedip = other;
+}
+
+void WgAllowedIP::disconnect() noexcept {
+    ip.next_allowedip = nullptr;
 }
 
 Protocol WgAllowedIP::determineInetFamily(const char* cidr) const noexcept {

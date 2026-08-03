@@ -45,20 +45,28 @@ public:
     WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;
 
     WgAllowedIP() noexcept;
-    explicit WgAllowedIP(const std::string& cidr) noexcept(false);
-    explicit WgAllowedIP(const char* cidr) noexcept(false);
+    explicit WgAllowedIP(const std::string& cidr);
+    explicit WgAllowedIP(const char* cidr);
 
     bool operator==(const WgAllowedIP& other) const noexcept;
 
-    void setCIDR(const std::string& cidr) noexcept(false);
-    void setCIDR(const char* cidr) noexcept(false);
+    void setCIDR(const std::string& cidr);
+    void setCIDR(const char* cidr);
 
-    wg_allowedip* getStruct() noexcept;
+    inline Protocol getProto() const noexcept;
+    std::string getAddr() const;
+    inline uint8_t getCIDRNumber() const noexcept;
 
 private:
+    friend class WgPeer;
+
     wg_allowedip ip{};
 
     Protocol determineInetFamily(const char* cidr) const noexcept;
+    wg_allowedip* getStruct() noexcept;
+    void connect(wg_allowedip* other) noexcept;
+    void disconnect() noexcept;
+
 };
 
 #endif // WGALLOWEDIP_H
