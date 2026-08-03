@@ -27,6 +27,13 @@ class WgPublicKey : public WgKey {
 public:
     WgPublicKey(WgPrivateKey private_key);
 
+    WgPublicKey(const WgPublicKey&) noexcept = default;
+    WgPublicKey& operator=(const WgPublicKey&) noexcept = default;
+
+    WgPublicKey(WgPublicKey&& other) noexcept;
+    WgPublicKey& operator=(WgPublicKey&& other) noexcept;
+
+
     virtual bool isProper() const noexcept override;
     virtual void generate() override;
 

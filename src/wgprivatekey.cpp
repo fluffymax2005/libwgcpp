@@ -21,6 +21,22 @@
 #include "wgprivatekey.h"
 
 
+WgPrivateKey::WgPrivateKey(WgPrivateKey&& other) noexcept {
+    if (this != &other) {
+        key = other.key;
+        other.makeZero();
+    }
+}
+
+WgPrivateKey& WgPrivateKey::operator=(WgPrivateKey&& other) noexcept {
+    if (this != &other) {
+        key = other.key;
+        other.makeZero();
+    }
+
+    return *this;
+}
+
 bool WgPrivateKey::isProper() const noexcept {
     return isGenerated;
 }

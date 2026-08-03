@@ -25,6 +25,28 @@ WgPublicKey::WgPublicKey(WgPrivateKey private_key)
     : private_key(private_key) {
 }
 
+WgPublicKey::WgPublicKey(WgPublicKey&& other) noexcept {
+    if (this != &other) {
+        key = other.key;
+        private_key = other.private_key;
+
+        other.makeZero();
+        other.private_key.makeZero();
+    }
+}
+
+WgPublicKey& WgPublicKey::operator=(WgPublicKey&& other) noexcept {
+    if (this != &other) {
+        key = other.key;
+        private_key = other.private_key;
+
+        other.makeZero();
+        other.private_key.makeZero();
+    }
+
+    return *this;
+}
+
 bool WgPublicKey::isProper() const noexcept {
     return isGenerated;
 }
