@@ -120,6 +120,27 @@ void WgAllowedIP::setCIDR(const char* cidr) {
     ip.cidr = prefix_len;
 }
 
+Protocol WgAllowedIP::getProto() const noexcept {
+    return static_cast<Protocol>(ip.family);
+}
+
+std::string WgAllowedIP::getAddr() const {
+    std::string addr;
+    int domain;
+    char buf[INET6_ADDRSTRLEN];
+    if (ip.family == AF_INET) {
+        addr = std::string(inet_ntop(AF_INET, &ip.ip4, buf, sizeof(buf)));
+    } else {
+        addr = std::string(inet_ntop(AF_INET6, &ip.ip6, buf, sizeof(buf)));
+    }
+
+    return addr;
+}
+
+uint8_t WgAllowedIP::getCIDRNumber() const noexcept {
+    return ip.cidr;
+}
+
 wg_allowedip* WgAllowedIP::getStruct() noexcept {
     return &ip;
 }
