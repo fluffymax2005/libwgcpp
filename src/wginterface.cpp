@@ -141,14 +141,13 @@ void WgInterface::set() {
 }
 
 void WgInterface::release() {
-    if (device && state == POWEREDON) {
-        if (wg_del_device(device->name) < 0)
-            throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be deleted", errno);
+    if (device && state != UNREGISTERED) {
+        wg_del_device(device->name);
         state = UNREGISTERED;
-    }
 
-    device.release();
-    peers.clear();
+        device.reset();
+        peers.clear();
+    }
 }
 
 std::vector<std::string> WgInterface::getPeers() const {
