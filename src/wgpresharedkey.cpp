@@ -20,6 +20,10 @@
 
 #include "wgpresharedkey.h"
 
+WgPresharedKey::WgPresharedKey() {
+    generate();
+}
+
 WgPresharedKey::WgPresharedKey(WgPresharedKey&& other) noexcept {
     if (this != &other) {
         key = other.key;

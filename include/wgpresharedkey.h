@@ -25,7 +25,7 @@
 
 class WgPresharedKey : public WgKey {
 public:
-    WgPresharedKey() = default;
+    WgPresharedKey();
 
     WgPresharedKey(const WgPresharedKey&) noexcept = default;
     WgPresharedKey& operator=(const WgPresharedKey&) noexcept = default;

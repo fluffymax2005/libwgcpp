@@ -21,6 +21,10 @@
 #include "wgprivatekey.h"
 
 
+WgPrivateKey::WgPrivateKey() {
+    generate();
+}
+
 WgPrivateKey::WgPrivateKey(WgPrivateKey&& other) noexcept {
     if (this != &other) {
         key = other.key;

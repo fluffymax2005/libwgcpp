@@ -23,6 +23,7 @@
 
 WgPublicKey::WgPublicKey(WgPrivateKey private_key)
     : private_key(private_key) {
+    generate();
 }
 
 WgPublicKey::WgPublicKey(WgPublicKey&& other) noexcept {

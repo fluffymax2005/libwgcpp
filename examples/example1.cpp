@@ -11,10 +11,7 @@ int main() {
         WgPeer peer;
 
         WgPrivateKey peerPrKey;
-        peerPrKey.generate();
         WgPublicKey peerPbKey(peerPrKey);
-        peerPbKey.generate();
-
         peer.setPublicKey(std::move(peerPbKey));
 
         // Create interface

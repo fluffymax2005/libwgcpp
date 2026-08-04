@@ -25,7 +25,7 @@
 
 class WgPrivateKey : public WgKey {
 public:
-    WgPrivateKey() = default;
+    WgPrivateKey();
 
     WgPrivateKey(const WgPrivateKey&) noexcept = default;
     WgPrivateKey& operator=(const WgPrivateKey&) noexcept = default;
