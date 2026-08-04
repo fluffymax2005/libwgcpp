@@ -62,7 +62,13 @@ void WgPeer::disconnectPeer() noexcept {
     if (peer == nullptr)
         return;
     peer->next_peer = nullptr;
-    peer->flags |= WGPEER_REMOVE_ME;
+}
+
+void WgPeer::remove() noexcept {
+    if (peer) {
+        disconnectPeer();
+        peer->flags |= WGPEER_REMOVE_ME;
+    }
 }
 
 void WgPeer::setPersistentKeepAlive(uint16_t time) const noexcept {
@@ -79,12 +85,10 @@ bool WgPeer::hasPublicKey(const WgPublicKey& key) const noexcept {
 }
 
 void WgPeer::removeAllowedIP(const std::string& cidr) noexcept {
-    auto it = std::find_if(ips.begin(), ips.end(), [&cidr](const std::unique_ptr<WgAllowedIP>& ptr) {
-        return ptr->getCIDR() == cidr;
+    ips.remove_if([&cidr](const std::unique_ptr<WgAllowedIP>& ptr) {
+           return ptr->getCIDR() == cidr;
     });
 
-    if (it != ips.end())
-        ips.erase_after(std::prev(it));
     invalidateAllowedIPs();
 }
 

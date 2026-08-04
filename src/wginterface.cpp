@@ -129,14 +129,22 @@ void WgInterface::removePeer(const WgPublicKey& key) {
         return ptr->hasPublicKey(key);
     });
 
-    peers.erase_after(std::prev(it));
-    invalidatePeers();
+    if (it != peers.end()) {
+        it->get()->remove();
+
+        auto prev = peers.before_begin();
+        while (std::next(prev) != it)
+            ++prev;
+        peers.erase_after(prev);
+        invalidatePeers();
+    }
 }
 
 void WgInterface::set() {
     if (device) {
         if (wg_set_device(device.get()) < 0)
             throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be set", errno);
+        state = POWEREDON;
     }
 }
 
@@ -162,7 +170,7 @@ std::vector<std::string> WgInterface::getPeers() const {
     std::vector<std::string> peers;
     wg_peer* peer;
     wg_key_b64_string key;
-    wg_for_each_peer(device, peer) {
+    wg_for_each_peer(dev, peer) {
         wg_key_to_base64(key, peer->public_key);
         try {
             peers.push_back(key);
@@ -236,6 +244,7 @@ WgInterface& WgInterface::operator=(WgInterface&& other) noexcept {
         this->device = std::move(other.device);
         this->state = other.state;
         other.state = UNREGISTERED;
+        this->peers = std::move(other.peers);
     }
 
     return *this;

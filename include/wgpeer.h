@@ -85,6 +85,7 @@ public:
 
     void connectPeer(wg_peer* other) noexcept;
     void disconnectPeer() noexcept;
+    void remove() noexcept;
 
     void setPersistentKeepAlive(uint16_t time) const noexcept;
 

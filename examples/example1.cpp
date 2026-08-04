@@ -20,7 +20,6 @@ int main() {
         interface.addPeer(std::move(peer));
 
         WgPrivateKey interfacePrKey;
-        interfacePrKey.generate();
 
         interface.setPrivateKey(std::move(interfacePrKey));
 
@@ -33,13 +32,9 @@ int main() {
             std::cout << "Interface \"" << interfaceName << "\" has peer with public key \"" << str << "\"" << std::endl;
         }
 
-    } catch (const WgException& e) {
-        std::cout << e.what() << std::endl;
-    } catch (const std::runtime_error& e) {
-        std::cout << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
     }
-
-
 
     return 0;
 }
