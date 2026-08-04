@@ -21,7 +21,10 @@
 #ifndef __WG_DEVICE__
 #define __WG_DEVICE__
 
-#include "wgexception.h"
+extern "C" {
+    #include "wireguard.h"
+}
+
 #include "wgpublickey.h"
 #include "wgpresharedkey.h"
 #include "wgpeer.h"
@@ -62,8 +65,8 @@ public:
     WgInterface(WgInterface&& other) noexcept;
     WgInterface& operator=(WgInterface&& other) noexcept;
 
-    WgInterface(const std::string& name) noexcept;
-    WgInterface(const char* name) noexcept;
+    WgInterface(const std::string& name);
+    WgInterface(const char* name);
 
     bool inline hasDevice() const noexcept;
     bool inline hasPrivateKey() const noexcept;
@@ -73,8 +76,8 @@ public:
     void setListeningPort(uint16_t port) const;
     void setFWMark(uint32_t mark) const noexcept;
 
-    virtual void setName(const std::string& name) noexcept;
-    virtual void setName(const char* name) noexcept;
+    virtual void setName(const std::string& name);
+    virtual void setName(const char* name);
 
     virtual void setPrivateKey(WgPrivateKey&& private_key, bool force = false);
 

@@ -21,7 +21,10 @@
 #ifndef WGALLOWEDIP_H
 #define WGALLOWEDIP_H
 
-#include "wireguard.h"
+extern "C" {
+    #include "wireguard.h"
+}
+
 #include "wgexception.h"
 
 #include <string>

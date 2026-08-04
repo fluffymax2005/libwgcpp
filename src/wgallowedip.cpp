@@ -126,7 +126,6 @@ Protocol WgAllowedIP::getProto() const noexcept {
 
 std::string WgAllowedIP::getAddr() const {
     std::string addr;
-    int domain;
     char buf[INET6_ADDRSTRLEN];
     if (ip.family == AF_INET) {
         addr = std::string(inet_ntop(AF_INET, &ip.ip4, buf, sizeof(buf)));

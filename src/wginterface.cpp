@@ -26,7 +26,7 @@ WgInterface::~WgInterface() noexcept {
     release();
 }
 
-WgInterface::WgInterface(WgInterface &&other) noexcept {
+WgInterface::WgInterface(WgInterface&& other) noexcept {
     if (this != &other) {
         release();
 
@@ -37,19 +37,13 @@ WgInterface::WgInterface(WgInterface &&other) noexcept {
     }
 }
 
-WgInterface::WgInterface(const std::string &name) noexcept {
+WgInterface::WgInterface(const std::string& name) {
     device = std::make_unique<wg_device>();
-    if (device == nullptr)
-        return;
-
     setName(name);
 }
 
-WgInterface::WgInterface(const char* name) noexcept {
+WgInterface::WgInterface(const char* name) {
     device = std::make_unique<wg_device>();
-    if (device == nullptr)
-        return;
-
     setName(name);
 }
 
@@ -92,14 +86,22 @@ void WgInterface::setFWMark(uint32_t mark) const noexcept {
 
 }
 
-void WgInterface::setName(const std::string &name) noexcept {
+void WgInterface::setName(const std::string &name) {
     setName(name.c_str());
 }
 
-void WgInterface::setName(const char *name) noexcept {
+void WgInterface::setName(const char *name) {
     // Setting name is only allowed case interface is powered off and name is valid
-    if (device && state == UNREGISTERED && tryValidateName(name))
+    if (device && state == UNREGISTERED && tryValidateName(name)) {
+
+        // Delete device if it existed. Ignore errors
+        wg_del_device(name);
+
+        if (wg_add_device(name) < 0)
+            throw WgException("Unable to register interface name", errno);
         std::strcpy(device->name, name);
+        state = POWEREDOFF;
+    }
 }
 
 void WgInterface::setPrivateKey(WgPrivateKey&& private_key, bool force) {
@@ -127,7 +129,7 @@ void WgInterface::removePeer(const WgPublicKey& key) {
         return ptr->hasPublicKey(key);
     });
 
-    std::erase(peers, it);
+    peers.erase_after(std::prev(it));
     invalidatePeers();
 }
 
@@ -150,30 +152,26 @@ void WgInterface::release() {
 }
 
 std::vector<std::string> WgInterface::getPeers() const {
-    char* device_names;
-    char* device_name;
-    size_t len;
+    if (device == nullptr)
+        return {};
 
-    device_names = wg_list_device_names();
-    if (device_names == nullptr)
-        throw WgException("Not enough memory for device names", errno);
+    wg_device* dev;
 
-    wg_device* device;
+    if (wg_get_device(&dev, device->name) < 0)
+        throw WgException("Unable to get interface", errno);
+
+    std::vector<std::string> peers;
     wg_peer* peer;
     wg_key_b64_string key;
-
-    if (wg_get_device(&device, device_name) < 0)
-        throw WgException("Unable to get interface", errno);
-    std::vector<std::string> peers;
     wg_for_each_peer(device, peer) {
         wg_key_to_base64(key, peer->public_key);
         try {
             peers.push_back(key);
         } catch (const std::bad_alloc& e) {
-            throw WgException(std::string("Unable to get peer's key. Reason: ") + e.what(), 0);
+            throw WgException(std::string("Unable to get peer's key. Reason: ") + e.what(), ENOMEM);
         }
     }
-    wg_free_device(device);
+    wg_free_device(dev);
     return peers;
 }
 

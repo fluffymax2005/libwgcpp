@@ -22,6 +22,7 @@
 #define WGPUBLICKEY_H
 
 #include "wgprivatekey.h"
+#include <stdexcept>
 
 class WgPublicKey : public WgKey {
 public:

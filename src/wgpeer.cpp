@@ -84,7 +84,7 @@ void WgPeer::removeAllowedIP(const std::string& cidr) noexcept {
     });
 
     if (it != ips.end())
-        std::erase(ips, it);
+        ips.erase_after(std::prev(it));
     invalidateAllowedIPs();
 }
 

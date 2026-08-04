@@ -33,6 +33,6 @@ std::array<WgKey::elem_t, WG_KEY_LEN> WgKey::cloneData() const noexcept {
 }
 
 void WgKey::makeZero() noexcept {
-    std::memcpy(key.data(), 0, WG_KEY_LEN);
+    std::memset(key.data(), 0, WG_KEY_LEN);
     isGenerated = false;
 }

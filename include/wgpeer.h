@@ -21,7 +21,10 @@
 #ifndef WGPEER_H
 #define WGPEER_H
 
-#include "wireguard.h"
+extern "C" {
+    #include "wireguard.h"
+}
+
 #include "wgpublickey.h"
 #include "wgpresharedkey.h"
 #include "wgallowedip.h"
@@ -70,7 +73,7 @@ public:
     bool operator==(const WgPeer& other) const noexcept;
 
     // Empty peer if no keys provided
-    WgPeer(WgPublicKey* public_key = nullptr, WgPresharedKey* preshared_key = nullptr);
+    WgPeer(WgPublicKey* public_key, WgPresharedKey* preshared_key = nullptr);
     WgPeer();
 
     void setPublicKey(WgPublicKey&& key) const;

@@ -21,7 +21,9 @@
 #ifndef WGKEY_H
 #define WGKEY_H
 
-#include "wireguard.h"
+extern "C" {
+    #include "wireguard.h"
+}
 
 #include <cstdint>
 #include <memory>

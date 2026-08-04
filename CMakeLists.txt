@@ -19,6 +19,9 @@ add_library(wgcpp SHARED
     src/wgpeer.cpp
     include/wgallowedip.h
     src/wgallowedip.cpp
+    examples/Makefile
+    examples/example1.cpp
+    scripts/Makefile
 )
 
 target_include_directories(wgcpp

@@ -52,7 +52,7 @@ bool WgPublicKey::isProper() const noexcept {
 }
 
 void WgPublicKey::generate() {
-    if (wg_key_is_zero(key.data()))
+    if (wg_key_is_zero(private_key.data()))
         throw std::runtime_error("Private key must be nonzero");
     wg_generate_public_key(key.data(), private_key.data());
     isGenerated = true;
