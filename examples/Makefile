@@ -1,5 +1,5 @@
-# Makefile для examples/
-# Использование: make FILE=example1
+# Makefile for examples/
+# Using: make FILE=example1
 
 CXX := g++
 CC := gcc

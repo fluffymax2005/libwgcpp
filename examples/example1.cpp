@@ -1,3 +1,4 @@
+
 #include "wginterface.h"
 #include <iostream>
 
@@ -27,13 +28,14 @@ int main() {
 
         // Print
         const auto peers = interface.getPeers();
-        std::cout << "Interface \"" << interfaceName << "\" has "<< peers.size() << " peers" << std::endl;
+        std::cout << "Interface \"" << interfaceName << "\" has "<< peers.size() << " peer(s)" << std::endl;
         for (const auto& str : peers) {
             std::cout << "Interface \"" << interfaceName << "\" has peer with public key \"" << str << "\"" << std::endl;
         }
 
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
+        return -1;
     }
 
     return 0;

@@ -1,0 +1,40 @@
+libwgcpp aka C++ Wireguard library
+==============================
+
+This is a wrapper over embedddable-wg-library, *not* meant to be embedded directly into the
+source code of your program. It is meant to be built as a shared
+library and integrated into project as .so library.
+
+Usage
+-----
+
+To try out example files enter following commands:
+
+make FILE=<name_of_example_file>
+./build/<name_of_example_file>
+
+Note: DO NOT enter full filename. For example, instead of "example1.cpp" use "example1"
+
+Dependencies
+------------
+
+Library obviously depends on embedddable-wg-library and embedddable-wg-library, in turn,
+depends only on libc. In addition, project uses C++17 STL or newer.
+
+Examples
+--------
+
+This directory provides two simple example of usage.
+
+Example1.cpp illustrates creating simple Wireguard server interface and inserting peer into it.
+It's execution should print into stdout that interface has 1 peer with random public key.
+You should run executable file with root priviliges.
+
+Example2.cpp shows simple way to create Wireguard client interface. Created similar way
+example1.cpp done it outputs more information. Requires root priviliges as well.
+
+License
+-------
+
+Because this uses code from embedddable-wg-library, libwgcpp is licensed
+under the LGPL-2.1+.
