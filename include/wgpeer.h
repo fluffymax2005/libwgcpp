@@ -90,7 +90,7 @@ public:
 
     bool hasPublicKey(const WgPublicKey& key) const noexcept;
 
-    void addAllowedIP(WgAllowedIP&& ip);
+    void addAllowedIP(const WgAllowedIP& ip);
     void removeAllowedIP(const std::string& cidr) noexcept;
 
     wg_peer* getStruct() const noexcept;

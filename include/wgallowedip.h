@@ -41,9 +41,14 @@ class WgAllowedIP {
 public:
     ~WgAllowedIP() = default;
 
+    // TO DO
+    // Consider allowing copy ctor and assignment
+    // Point that ip MUST NOT be changed directly outside of class
+    // It it compability to C layer
+
     // Class owns next elem so restricted to copy itself to prevent unexpected destruction
-    WgAllowedIP(const WgAllowedIP& other) noexcept = delete;
-    WgAllowedIP& operator=(const WgAllowedIP& other) noexcept = delete;
+    WgAllowedIP(const WgAllowedIP& other) noexcept = default;
+    WgAllowedIP& operator=(const WgAllowedIP& other) noexcept = default;
 
     WgAllowedIP(WgAllowedIP&& other) noexcept;
     WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;

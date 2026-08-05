@@ -98,11 +98,11 @@ void WgPeer::removeAllowedIP(const std::string& cidr) noexcept {
     invalidateAllowedIPs();
 }
 
-void WgPeer::addAllowedIP(WgAllowedIP&& ip) {
+void WgPeer::addAllowedIP(const WgAllowedIP& ip) {
     if (peer == nullptr)
         return;
 
-    ips.push_front(std::make_unique<WgAllowedIP>(std::move(ip)));
+    ips.push_front(std::make_unique<WgAllowedIP>((ip)));
 
     invalidateAllowedIPs();
 }
