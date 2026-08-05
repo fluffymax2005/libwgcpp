@@ -21,6 +21,7 @@
 
 #include "wginterface.h"
 
+#include <limits>
 
 WgInterface::~WgInterface() noexcept {
     release();
@@ -68,6 +69,20 @@ bool WgInterface::isListening() const noexcept {
 bool WgInterface::isSet() const noexcept {
     return state == POWEREDON;
 }
+
+const char* WgInterface::getName() const noexcept {
+    return device ? device->name : nullptr;
+}
+
+uint16_t WgInterface::getPort() const noexcept {
+    return device ? device->listen_port : 0;
+}
+
+uint32_t WgInterface::getFWMark() const noexcept {
+    return device ? device->fwmark : std::numeric_limits<uint32_t>::max();
+}
+
+
 
 void WgInterface::setListeningPort(uint16_t port) const {
     if (port == 0)

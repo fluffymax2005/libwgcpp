@@ -73,6 +73,10 @@ public:
     bool inline isListening() const noexcept;
     bool inline isSet() const noexcept;
 
+    const char* getName() const noexcept;
+    uint16_t getPort() const noexcept;
+    uint32_t getFWMark() const noexcept;
+
     void setListeningPort(uint16_t port) const;
     void setFWMark(uint32_t mark) const noexcept;
 
