@@ -28,6 +28,7 @@ extern "C" {
 #include "wgpublickey.h"
 #include "wgpresharedkey.h"
 #include "wgallowedip.h"
+#include "wgendpoint.h"
 
 #include <memory>
 #include <forward_list>
@@ -79,9 +80,7 @@ public:
     void setPublicKey(WgPublicKey&& key) const;
     void setPresharedKey(WgPresharedKey&& key) const;
 
-    // TO DO
-    // Implement endpoint and integrate there
-    void setEndpoint(const wg_endpoint& endpoint) const;
+    void setEndpoint(const WgEndpoint& endpoint) const;
 
     void connectPeer(wg_peer* other) noexcept;
     void disconnectPeer() noexcept;

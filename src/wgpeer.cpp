@@ -52,6 +52,12 @@ void WgPeer::setPresharedKey(WgPresharedKey&& key) const {
     setKey(std::move(key), KeyType::PRESHARED);
 }
 
+void WgPeer::setEndpoint(const WgEndpoint& endpoint) const {
+    if (peer == nullptr)
+        return;
+    peer->endpoint = endpoint.getStruct();
+}
+
 void WgPeer::connectPeer(wg_peer* other) noexcept {
     if (peer == nullptr || other == nullptr)
         return;
