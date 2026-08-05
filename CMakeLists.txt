@@ -21,7 +21,8 @@ add_library(wgcpp SHARED
     src/wgallowedip.cpp
     examples/Makefile
     examples/example1.cpp
-    scripts/Makefile
+    include/wgendpoint.h
+    src/wgendpoint.cpp
 )
 
 target_include_directories(wgcpp
