@@ -2,27 +2,26 @@ cmake_minimum_required(VERSION 3.15)
 project(wgcpp VERSION 1.0.0 LANGUAGES CXX)
 
 add_library(wgcpp SHARED
-    src/wginterface.cpp
+    include/wginterface.hpp
     embeddable-wg-library/wireguard.c
     include/wginterface.h
     include/wgexception.h
     src/wgexception.cpp
     include/wgkey.h
     include/wgpresharedkey.h
-    src/wgkey.cpp
-    src/wgpresharedkey.cpp
+    include/wgkey.hpp
+    include/wgpresharedkey.hpp
     include/wgprivatekey.h
-    src/wgprivatekey.cpp
+    include/wgprivatekey.hpp
     include/wgpublickey.h
-    src/wgpublickey.cpp
+    include/wgpublickey.hpp
     include/wgpeer.h
-    src/wgpeer.cpp
+    include/wgpeer.hpp
     include/wgallowedip.h
-    src/wgallowedip.cpp
-    examples/example1.cpp
+    include/wgallowedip.hpp
     include/wgendpoint.h
-    src/wgendpoint.cpp
-    examples/example2.cpp
+    include/wgendpoint.hpp
+    include/threadsafety.h
 )
 
 target_include_directories(wgcpp

@@ -25,10 +25,10 @@ extern "C" {
     #include "wireguard.h"
 }
 
+#include "threadsafety.h"
+
 #include <cstdint>
-#include <memory>
 #include <array>
-#include <cstring>
 #include <type_traits>
 
 constexpr uint32_t WG_KEY_LEN = sizeof(wg_key);
@@ -42,7 +42,7 @@ enum class KeyType : uint8_t {
 inline enum wg_device_flags operator|(enum wg_device_flags a, enum wg_device_flags b) {
     return static_cast<wg_device_flags>(
         static_cast<int>(a) | static_cast<int>(b)
-    );
+        );
 }
 
 inline enum wg_device_flags& operator|=(enum wg_device_flags& a, enum wg_device_flags b) {
@@ -50,6 +50,7 @@ inline enum wg_device_flags& operator|=(enum wg_device_flags& a, enum wg_device_
     return a;
 }
 
+template<typename ThreadPolicy = MultiThreaded>
 class WgKey {
 public:
     using elem_t = std::remove_extent_t<wg_key>;
@@ -69,6 +70,10 @@ protected:
     std::array<elem_t, WG_KEY_LEN> key{};
 
     bool isGenerated{false};
+
+    mutable typename ThreadPolicy::Mutex mutex;
 };
+
+#include "wgkey.hpp"
 
 #endif // WGKEY_H

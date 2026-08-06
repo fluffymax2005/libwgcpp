@@ -18,33 +18,22 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "wgpresharedkey.h"
+#ifndef THREADSAFETY_H
+#define THREADSAFETY_H
 
-WgPresharedKey::WgPresharedKey() {
-    generate();
-}
+#include <mutex>
 
-WgPresharedKey::WgPresharedKey(WgPresharedKey&& other) noexcept {
-    if (this != &other) {
-        key = other.key;
-        other.makeZero();
-    }
-}
+struct SingleThreaded {
+    struct Mutex {
+        inline void lock() {}
+        inline void unlock() {}
+    };
+    using Lock = Mutex;
+};
 
-WgPresharedKey& WgPresharedKey::operator=(WgPresharedKey&& other) noexcept {
-    if (this != &other) {
-        key = other.key;
-        other.makeZero();
-    }
+struct MultiThreaded {
+    using Mutex = std::mutex;
+    using Lock = std::lock_guard<std::mutex>;
+};
 
-    return *this;
-}
-
-bool WgPresharedKey::isProper() const noexcept {
-    return isGenerated;
-}
-
-void WgPresharedKey::generate() {
-    wg_generate_preshared_key(key.data());
-    isGenerated = true;
-}
+#endif // THREADSAFETY_H

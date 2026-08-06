@@ -18,31 +18,37 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "wgendpoint.h"
-
-WgEndpoint::WgEndpoint() noexcept {
-    // Default Wireguard port + phony ip addr
-    endpoint.addr4.sin_family = AF_INET;
-    endpoint.addr4.sin_port = htons(51820);
+template<typename TP>
+WgPresharedKey<TP>::WgPresharedKey() {
+    generate();
 }
 
-WgEndpoint WgEndpoint::create(const std::string& ip, uint16_t port) {
-    WgEndpoint ep;
+template<typename TP>
+WgPresharedKey<TP>::WgPresharedKey(WgPresharedKey<TP>&& other) noexcept {
+    if (this != &other) {
+        this->key = other.key;
+        other.makeZero();
+    }
+}
 
-    if (inet_pton(AF_INET, ip.c_str(), &ep.endpoint.addr4.sin_addr) == 1) {
-        ep.endpoint.addr4.sin_family = AF_INET;
-        ep.endpoint.addr4.sin_port = htons(port);
-    } else if (inet_pton(AF_INET6, ip.c_str(), &ep.endpoint.addr6.sin6_addr) == 1) {
-        ep.endpoint.addr6.sin6_family = AF_INET6;
-        ep.endpoint.addr6.sin6_port = htons(port);
-    } else {
-        throw std::invalid_argument("Invalid IP: " + ip);
+template<typename TP>
+WgPresharedKey<TP>& WgPresharedKey<TP>::operator=(WgPresharedKey&& other) noexcept {
+    if (this != &other) {
+        this->key = other.key;
+        other.makeZero();
     }
 
-    return ep;
+    return *this;
 }
 
-const wg_endpoint& WgEndpoint::getStruct() const noexcept {
-    return endpoint;
+template<typename TP>
+bool WgPresharedKey<TP>::isProper() const noexcept {
+    return this->isGenerated;
 }
 
+template<typename TP>
+void WgPresharedKey<TP>::generate() {
+    typename TP::Lock lock(this->mutex);
+    wg_generate_preshared_key(this->key.data());
+    this->isGenerated = true;
+}

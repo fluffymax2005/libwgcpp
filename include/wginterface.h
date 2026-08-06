@@ -18,35 +18,30 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef __WG_DEVICE__
-#define __WG_DEVICE__
+#ifndef __WG_INTERFACE__
+#define __WG_INTERFACE__
+
 
 extern "C" {
     #include "wireguard.h"
 }
 
 #include "wgpublickey.h"
-#include "wgpresharedkey.h"
 #include "wgpeer.h"
+#include "threadsafety.h"
+#include "wgexception.h"
 
-#include <wireguard.h>
+#include <limits>
+#include <cstring>
+#include <cerrno>
+#include <algorithm>
 #include <string>
 #include <cstdint>
 #include <memory>
 #include <forward_list>
 #include <vector>
-#include <cstring>
-#include <cerrno>
-#include <algorithm>
 
-enum class ThreadSafety : uint8_t {
-    SAFE,
-    UNSAFE,
-};
-
-// TO DO
-// Implement Thread safe and unsafe versions
-//template<ThreadSafety = ThreadSafety::SAFE>
+template<typename ThreadPolicy = MultiThreaded>
 class WgInterface {
 public:
     using WgKeyStringType = wg_key_b64_string;
@@ -83,12 +78,12 @@ public:
     virtual void setName(const std::string& name);
     virtual void setName(const char* name);
 
-    virtual void setPrivateKey(WgPrivateKey&& private_key, bool force = false);
+    virtual void setPrivateKey(WgPrivateKey<ThreadPolicy>&& private_key, bool force = false);
 
     // TO DO
     // Change wg_peer with self implemented version later
-    virtual void addPeer(WgPeer&& peer);
-    virtual void removePeer(const WgPublicKey& key);
+    virtual void addPeer(WgPeer<ThreadPolicy>&& peer);
+    virtual void removePeer(const WgPublicKey<ThreadPolicy>& key);
 
     virtual void set();
     virtual void release();
@@ -97,14 +92,19 @@ public:
 
 protected:
     std::unique_ptr<wg_device> device;
-    std::forward_list<std::unique_ptr<WgPeer>> peers;
+    std::forward_list<std::unique_ptr<WgPeer<ThreadPolicy>>> peers;
     InterfaceState state{UNREGISTERED};
 
-    void setKey(WgKey&& key, KeyType type, bool force = false);
+    void setKey(WgKey<ThreadPolicy>&& key, KeyType type, bool force = false);
+
+    mutable typename ThreadPolicy::Mutex mutex;
 
 private:
     inline bool tryValidateName(const char* name) const noexcept;
-    void invalidatePeers() const noexcept;
+    void invalidatePeers() noexcept;
+    void setNameAbstr(const char* name);
 };
+
+#include "wginterface.hpp"
 
 #endif

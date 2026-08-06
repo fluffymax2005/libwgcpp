@@ -18,36 +18,46 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "wgprivatekey.h"
-
-
-WgPrivateKey::WgPrivateKey() {
+template<typename TP>
+WgPublicKey<TP>::WgPublicKey(WgPrivateKey<TP> private_key)
+    : private_key(private_key) {
     generate();
 }
 
-WgPrivateKey::WgPrivateKey(WgPrivateKey&& other) noexcept {
+template<typename TP>
+WgPublicKey<TP>::WgPublicKey(WgPublicKey&& other) noexcept {
     if (this != &other) {
-        key = other.key;
+        this->key = other.key;
+        private_key = other.private_key;
+
         other.makeZero();
+        other.private_key.makeZero();
     }
 }
 
-WgPrivateKey& WgPrivateKey::operator=(WgPrivateKey&& other) noexcept {
+template<typename TP>
+WgPublicKey<TP>& WgPublicKey<TP>::operator=(WgPublicKey&& other) noexcept {
     if (this != &other) {
-        key = other.key;
+        this->key = other.key;
+        private_key = other.private_key;
+
         other.makeZero();
+        other.private_key.makeZero();
     }
 
     return *this;
 }
 
-bool WgPrivateKey::isProper() const noexcept {
-    return isGenerated;
+template<typename TP>
+bool WgPublicKey<TP>::isProper() const noexcept {
+    return this->isGenerated;
 }
 
-void WgPrivateKey::generate() {
-    wg_generate_private_key(key.data());
-    isGenerated = true;
+template<typename TP>
+void WgPublicKey<TP>::generate() {
+    typename TP::Lock lock(this->mutex);
+    if (!private_key.isProper())
+        throw std::runtime_error("Private key must be nonzero");
+    wg_generate_public_key(this->key.data(), private_key.data());
+    this->isGenerated = true;
 }
-
-

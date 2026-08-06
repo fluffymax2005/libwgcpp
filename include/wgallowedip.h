@@ -25,11 +25,13 @@ extern "C" {
     #include "wireguard.h"
 }
 
+#include "threadsafety.h"
 #include "wgexception.h"
 
-#include <string>
 #include <cstring>
 #include <charconv>
+
+#include <string>
 #include <arpa/inet.h>
 
 enum class Protocol : uint8_t {
@@ -37,6 +39,7 @@ enum class Protocol : uint8_t {
     IPv6 = AF_INET6
 };
 
+template<typename ThreadPolicy = MultiThreaded>
 class WgAllowedIP {
 public:
     ~WgAllowedIP() = default;
@@ -73,8 +76,9 @@ public:
 
 private:
     wg_allowedip ip{};
-
-    Protocol determineInetFamily(const char* cidr) const noexcept;
+    mutable typename ThreadPolicy::Mutex mutex;
 };
+
+#include "wgallowedip.hpp"
 
 #endif // WGALLOWEDIP_H

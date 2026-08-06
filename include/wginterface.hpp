@@ -19,15 +19,13 @@
 */
 
 
-#include "wginterface.h"
-
-#include <limits>
-
-WgInterface::~WgInterface() noexcept {
+template<typename TP>
+WgInterface<TP>::~WgInterface() noexcept {
     release();
 }
 
-WgInterface::WgInterface(WgInterface&& other) noexcept {
+template<typename TP>
+WgInterface<TP>::WgInterface(WgInterface&& other) noexcept {
     if (this != &other) {
         release();
 
@@ -38,53 +36,62 @@ WgInterface::WgInterface(WgInterface&& other) noexcept {
     }
 }
 
-WgInterface::WgInterface(const std::string& name) {
+template<typename TP>
+WgInterface<TP>::WgInterface(const std::string& name) {
     device = std::make_unique<wg_device>();
     setName(name);
 }
 
-WgInterface::WgInterface(const char* name) {
+template<typename TP>
+WgInterface<TP>::WgInterface(const char* name) {
     device = std::make_unique<wg_device>();
     setName(name);
 }
 
-bool WgInterface::hasDevice() const noexcept {
+template<typename TP>
+bool WgInterface<TP>::hasDevice() const noexcept {
     return device.get();
 }
 
-bool WgInterface::hasPrivateKey() const noexcept {
+template<typename TP>
+bool WgInterface<TP>::hasPrivateKey() const noexcept {
     if (device) {
         return device->flags & WGDEVICE_HAS_PRIVATE_KEY;
     }
     return false;
 }
 
-bool WgInterface::isListening() const noexcept {
+template<typename TP>
+bool WgInterface<TP>::isListening() const noexcept {
     if (device) {
         return device->flags & WGDEVICE_HAS_LISTEN_PORT && device->listen_port;
     }
     return false;
 }
 
-bool WgInterface::isSet() const noexcept {
+template<typename TP>
+bool WgInterface<TP>::isSet() const noexcept {
     return state == POWEREDON;
 }
 
-const char* WgInterface::getName() const noexcept {
+template<typename TP>
+const char* WgInterface<TP>::getName() const noexcept {
     return device ? device->name : nullptr;
 }
 
-uint16_t WgInterface::getPort() const noexcept {
+template<typename TP>
+uint16_t WgInterface<TP>::getPort() const noexcept {
     return device ? device->listen_port : 0;
 }
 
-uint32_t WgInterface::getFWMark() const noexcept {
+template<typename TP>
+uint32_t WgInterface<TP>::getFWMark() const noexcept {
     return device ? device->fwmark : std::numeric_limits<uint32_t>::max();
 }
 
-
-
-void WgInterface::setListeningPort(uint16_t port) const {
+template<typename TP>
+void WgInterface<TP>::setListeningPort(uint16_t port) const {
+    typename TP::Lock lock(mutex);
     if (port == 0)
         throw std::invalid_argument("Invalid port for interface \"" + (device ? std::string(device->name) : "") + "\" is given");
     if (device) {
@@ -93,7 +100,9 @@ void WgInterface::setListeningPort(uint16_t port) const {
     }
 }
 
-void WgInterface::setFWMark(uint32_t mark) const noexcept {
+template<typename TP>
+void WgInterface<TP>::setFWMark(uint32_t mark) const noexcept {
+    typename TP::Lock lock(mutex);
     if (device) {
         device->fwmark = mark;
         device->flags |= WGDEVICE_HAS_FWMARK;
@@ -101,32 +110,30 @@ void WgInterface::setFWMark(uint32_t mark) const noexcept {
 
 }
 
-void WgInterface::setName(const std::string &name) {
-    setName(name.c_str());
+template<typename TP>
+void WgInterface<TP>::setName(const std::string &name) {
+    typename TP::Lock lock(mutex);
+    setNameAbstr(name.c_str());
 }
 
-void WgInterface::setName(const char *name) {
+template<typename TP>
+void WgInterface<TP>::setName(const char *name) {
     // Setting name is only allowed case interface is powered off and name is valid
-    if (device && state == UNREGISTERED && tryValidateName(name)) {
-
-        // Delete device if it existed. Ignore errors
-        wg_del_device(name);
-
-        if (wg_add_device(name) < 0)
-            throw WgException("Unable to register interface name", errno);
-        std::strcpy(device->name, name);
-        state = POWEREDOFF;
-    }
+    typename TP::Lock lock(mutex);
+    setNameAbstr(name);
 }
 
-void WgInterface::setPrivateKey(WgPrivateKey&& private_key, bool force) {
+template<typename TP>
+void WgInterface<TP>::setPrivateKey(WgPrivateKey<TP>&& private_key, bool force) {
     setKey(std::move(private_key), KeyType::PRIVATE, force);
 }
 
-void WgInterface::addPeer(WgPeer&& peer) {
+template<typename TP>
+void WgInterface<TP>::addPeer(WgPeer<TP>&& peer) {
+    typename TP::Lock lock(mutex);
     if (peer == nullptr)
         return;
-    peers.push_front(std::make_unique<WgPeer>(std::move(peer)));
+    peers.push_front(std::make_unique<WgPeer<TP>>(std::move(peer)));
 
     // Invalidate peers connections
     invalidatePeers();
@@ -137,10 +144,12 @@ void WgInterface::addPeer(WgPeer&& peer) {
     }
 }
 
-void WgInterface::removePeer(const WgPublicKey& key) {
+template<typename TP>
+void WgInterface<TP>::removePeer(const WgPublicKey<TP>& key) {
+    typename TP::Lock lock(mutex);
     if (!key.isProper())
         return;
-    auto it = std::find_if(peers.begin(), peers.end(), [&key](const std::unique_ptr<WgPeer>& ptr) {
+    auto it = std::find_if(peers.begin(), peers.end(), [&key](const std::unique_ptr<WgPeer<TP>>& ptr) {
         return ptr->hasPublicKey(key);
     });
 
@@ -155,7 +164,9 @@ void WgInterface::removePeer(const WgPublicKey& key) {
     }
 }
 
-void WgInterface::set() {
+template<typename TP>
+void WgInterface<TP>::set() {
+    typename TP::Lock lock(mutex);
     if (device) {
         if (wg_set_device(device.get()) < 0)
             throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be set", errno);
@@ -163,7 +174,9 @@ void WgInterface::set() {
     }
 }
 
-void WgInterface::release() {
+template<typename TP>
+void WgInterface<TP>::release() {
+    typename TP::Lock lock(mutex);
     if (device && state != UNREGISTERED) {
         wg_del_device(device->name);
         state = UNREGISTERED;
@@ -173,7 +186,9 @@ void WgInterface::release() {
     }
 }
 
-std::vector<std::string> WgInterface::getPeers() const {
+template<typename TP>
+std::vector<std::string> WgInterface<TP>::getPeers() const {
+    typename TP::Lock lock(mutex);
     if (device == nullptr)
         return {};
 
@@ -197,7 +212,9 @@ std::vector<std::string> WgInterface::getPeers() const {
     return peers;
 }
 
-void WgInterface::setKey(WgKey&& key, KeyType type, bool force) {
+template<typename TP>
+void WgInterface<TP>::setKey(WgKey<TP>&& key, KeyType type, bool force) {
+    typename TP::Lock lock(mutex);
     if (device == nullptr)
         return;
     if (!force && state == POWEREDON) {
@@ -217,14 +234,15 @@ void WgInterface::setKey(WgKey&& key, KeyType type, bool force) {
     }
 }
 
-bool WgInterface::tryValidateName(const char *name) const noexcept {
+template<typename TP>
+bool WgInterface<TP>::tryValidateName(const char* name) const noexcept {
     return name && std::strlen(name) > 0 && std::strlen(name) < IFNAMSIZ;
 }
 
-void WgInterface::invalidatePeers() const noexcept {
+template<typename TP>
+void WgInterface<TP>::invalidatePeers() noexcept {
     if (device == nullptr)
         return;
-
 
     if (peers.empty()) {
         // Update links case there no peers left
@@ -237,25 +255,38 @@ void WgInterface::invalidatePeers() const noexcept {
         auto second = std::next(first);
 
         while (second != peers.end()) {
-            WgPeer& p1 = *first->get();
-            WgPeer& p2 = *second->get();
+            WgPeer<TP>& p1 = *first->get();
+            WgPeer<TP>& p2 = *second->get();
             p1.connectPeer(p2.getStruct());
 
             ++first;
             ++second;
         }
 
-        WgPeer& lastPeer = *first->get();
+        WgPeer<TP>& lastPeer = *first->get();
         lastPeer.disconnectPeer();
         device->last_peer = lastPeer.getStruct();
     }
 
 }
 
-WgInterface& WgInterface::operator=(WgInterface&& other) noexcept {
+template<typename ThreadPolicy>
+void WgInterface<ThreadPolicy>::setNameAbstr(const char *name) {
+    if (device && state == UNREGISTERED && tryValidateName(name)) {
+        wg_del_device(name);
+        if (wg_add_device(name) < 0)
+            throw WgException("Unable to register interface name", errno);
+        std::strcpy(device->name, name);
+        state = POWEREDOFF;
+    }
+}
+
+template<typename TP>
+WgInterface<TP>& WgInterface<TP>::operator=(WgInterface&& other) noexcept {
     if (this != &other) {
         release();
 
+        typename TP::Lock lock(mutex);
         this->device = std::move(other.device);
         this->state = other.state;
         other.state = UNREGISTERED;
@@ -264,5 +295,3 @@ WgInterface& WgInterface::operator=(WgInterface&& other) noexcept {
 
     return *this;
 }
-
-

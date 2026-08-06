@@ -18,21 +18,27 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "wgkey.h"
+#include <cstring>
 
-const WgKey::elem_t* WgKey::data() const noexcept {
+template<typename TP>
+const typename WgKey<TP>::elem_t* WgKey<TP>::data() const noexcept {
     return key.data();
 }
 
-uint32_t WgKey::size() const noexcept {
+template<typename TP>
+uint32_t WgKey<TP>::size() const noexcept {
     return WG_KEY_LEN;
 }
 
-std::array<WgKey::elem_t, WG_KEY_LEN> WgKey::cloneData() const noexcept {
+template<typename TP>
+std::array<typename WgKey<TP>::elem_t, WG_KEY_LEN> WgKey<TP>::cloneData() const noexcept {
+    typename TP::Lock lock(mutex);
     return key;
 }
 
-void WgKey::makeZero() noexcept {
+template<typename TP>
+void WgKey<TP>::makeZero() noexcept {
+    typename TP::Lock lock(mutex);
     std::memset(key.data(), 0, WG_KEY_LEN);
     isGenerated = false;
 }

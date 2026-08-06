@@ -22,8 +22,10 @@
 #define WGPRIVATEKEY_H
 
 #include "wgkey.h"
+#include "threadsafety.h"
 
-class WgPrivateKey : public WgKey {
+template<typename ThreadPolicy = MultiThreaded>
+class WgPrivateKey : public WgKey<ThreadPolicy> {
 public:
     WgPrivateKey();
 
@@ -36,5 +38,7 @@ public:
     virtual bool isProper() const noexcept override;
     virtual void generate() override;
 };
+
+#include "wgprivatekey.hpp"
 
 #endif // WGPRIVATEKEY_H

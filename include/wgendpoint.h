@@ -25,11 +25,13 @@ extern "C" {
     #include "wireguard.h"
 }
 
+#include "threadsafety.h"
+
 #include <arpa/inet.h>
 #include <string>
-#include <stdexcept>
 
 
+template<typename ThreadPolicy = MultiThreaded>
 class WgEndpoint {
 public:
     WgEndpoint() noexcept;
@@ -49,5 +51,7 @@ public:
 private:
     wg_endpoint endpoint{};
 };
+
+#include "wgendpoint.hpp"
 
 #endif // WGENDPOINT_H

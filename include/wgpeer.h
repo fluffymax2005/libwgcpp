@@ -29,15 +29,19 @@ extern "C" {
 #include "wgpresharedkey.h"
 #include "wgallowedip.h"
 #include "wgendpoint.h"
+#include "threadsafety.h"
 
 #include <memory>
 #include <forward_list>
 #include <algorithm>
+#include <cstring>
+#include <stdexcept>
+
 
 inline enum wg_peer_flags operator|(enum wg_peer_flags a, enum wg_peer_flags b) {
     return static_cast<wg_peer_flags>(
         static_cast<int>(a) | static_cast<int>(b)
-    );
+        );
 }
 
 inline enum wg_peer_flags& operator|=(enum wg_peer_flags& a, enum wg_peer_flags b) {
@@ -48,7 +52,7 @@ inline enum wg_peer_flags& operator|=(enum wg_peer_flags& a, enum wg_peer_flags 
 inline enum wg_peer_flags operator&(enum wg_peer_flags a, enum wg_peer_flags b) {
     return static_cast<wg_peer_flags>(
         static_cast<int>(a) & static_cast<int>(b)
-    );
+        );
 }
 
 inline enum wg_peer_flags& operator&=(enum wg_peer_flags& a, enum wg_peer_flags b) {
@@ -60,6 +64,7 @@ inline enum wg_peer_flags operator!(enum wg_peer_flags a) {
     return static_cast<wg_peer_flags>(a);
 }
 
+template<typename ThreadPolicy = MultiThreaded>
 class WgPeer {
 public:
     ~WgPeer() noexcept = default;
@@ -74,13 +79,13 @@ public:
     bool operator==(const WgPeer& other) const noexcept;
 
     // Empty peer if no keys provided
-    WgPeer(WgPublicKey* public_key, WgPresharedKey* preshared_key = nullptr);
+    WgPeer(WgPublicKey<ThreadPolicy>* public_key, WgPresharedKey<ThreadPolicy>* preshared_key = nullptr);
     WgPeer();
 
-    void setPublicKey(WgPublicKey&& key) const;
-    void setPresharedKey(WgPresharedKey&& key) const;
+    void setPublicKey(WgPublicKey<ThreadPolicy>&& key);
+    void setPresharedKey(WgPresharedKey<ThreadPolicy>&& key);
 
-    void setEndpoint(const WgEndpoint& endpoint) const;
+    void setEndpoint(const WgEndpoint<ThreadPolicy>& endpoint);
 
     void connectPeer(wg_peer* other) noexcept;
     void disconnectPeer() noexcept;
@@ -88,21 +93,24 @@ public:
 
     void setPersistentKeepAlive(uint16_t time) const noexcept;
 
-    bool hasPublicKey(const WgPublicKey& key) const noexcept;
+    bool hasPublicKey(const WgPublicKey<ThreadPolicy>& key) const noexcept;
 
-    void addAllowedIP(const WgAllowedIP& ip);
+    void addAllowedIP(const WgAllowedIP<ThreadPolicy>& ip);
     void removeAllowedIP(const std::string& cidr) noexcept;
 
     wg_peer* getStruct() const noexcept;
 
 private:
     std::unique_ptr<wg_peer> peer;
-    std::forward_list<std::unique_ptr<WgAllowedIP>> ips;
+    std::forward_list<std::unique_ptr<WgAllowedIP<ThreadPolicy>>> ips;
+    mutable typename ThreadPolicy::Mutex mutex;
 
-    void setKey(WgKey&& key, KeyType type) const;
+    void setKey(WgKey<ThreadPolicy>&& key, KeyType type) const;
 
     void invalidateAllowedIPs() noexcept;
 
 };
+
+#include "wgpeer.hpp"
 
 #endif // WGPEER_H

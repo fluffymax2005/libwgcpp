@@ -22,11 +22,14 @@
 #define WGPUBLICKEY_H
 
 #include "wgprivatekey.h"
+#include "threadsafety.h"
+
 #include <stdexcept>
 
-class WgPublicKey : public WgKey {
+template<typename ThreadPolicy = MultiThreaded>
+class WgPublicKey : public WgKey<ThreadPolicy> {
 public:
-    WgPublicKey(WgPrivateKey private_key);
+    WgPublicKey(WgPrivateKey<ThreadPolicy> private_key);
 
     WgPublicKey(const WgPublicKey&) noexcept = default;
     WgPublicKey& operator=(const WgPublicKey&) noexcept = default;
@@ -39,7 +42,9 @@ public:
     virtual void generate() override;
 
 private:
-    WgPrivateKey private_key;
+    WgPrivateKey<ThreadPolicy> private_key;
 };
+
+#include "wgpublickey.hpp"
 
 #endif // WGPUBLICKEY_H

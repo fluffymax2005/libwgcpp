@@ -22,8 +22,10 @@
 #define WGPRESHAREDKEY_H
 
 #include "wgkey.h"
+#include "threadsafety.h"
 
-class WgPresharedKey : public WgKey {
+template<typename ThreadPolicy = MultiThreaded>
+class WgPresharedKey : public WgKey<ThreadPolicy> {
 public:
     WgPresharedKey();
 
@@ -36,5 +38,7 @@ public:
     virtual bool isProper() const noexcept override;
     virtual void generate() override;
 };
+
+#include "wgpresharedkey.hpp"
 
 #endif // WGPRESHAREDKEY_H
