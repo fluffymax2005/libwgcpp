@@ -1,8 +1,13 @@
-
 #include "wginterface.h"
 #include <iostream>
 
 int main() {
+
+    using WgPrivateKey = WgPrivateKey<SingleThreaded>;
+    using WgPublicKey = WgPublicKey<SingleThreaded>;
+    using WgPeer = WgPeer<SingleThreaded>;
+    using WgInterface = WgInterface<SingleThreaded>;
+
 
     const char* interfaceName = "wg0";
 

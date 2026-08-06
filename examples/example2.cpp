@@ -1,10 +1,18 @@
 #include "wginterface.h"
+#include "wgendpoint.h"
 
 #include <iostream>
 #include <chrono>
 #include <thread>
 
 int main() {
+    using WgAllowedIP = WgAllowedIP<SingleThreaded>;
+    using WgEndpoint = WgEndpoint<SingleThreaded>;
+    using WgPrivateKey = WgPrivateKey<SingleThreaded>;
+    using WgPresharedKey = WgPresharedKey<SingleThreaded>;
+    using WgPublicKey = WgPublicKey<SingleThreaded>;
+    using WgPeer = WgPeer<SingleThreaded>;
+    using WgInterface = WgInterface<SingleThreaded>;
 
     const char* interfaceName = "wg10";
 
