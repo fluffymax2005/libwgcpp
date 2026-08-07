@@ -18,24 +18,65 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file
+ * @brief Provides implementation for Wireguard preshared key
+ */
+
 #ifndef WGPRESHAREDKEY_H
 #define WGPRESHAREDKEY_H
 
 #include "wgkey.h"
 #include "threadsafety.h"
 
+/**
+ * @class WgPresharedKey
+ * @brief Implementation of Wireguard preshared key.
+ * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by default.
+ */
 template<typename ThreadPolicy = MultiThreaded>
 class WgPresharedKey : public WgKey<ThreadPolicy> {
 public:
-    WgPresharedKey();
 
+    /**
+     * @brief Default constructor. Calls WgPresharedKey::generate. Key is ready to insert by constructing
+     */
+    WgPresharedKey() noexcept;
+
+    /**
+     * @brief Default copy constructor. Copies <TT>this->key</TT> from <TT>other.key</TT>.
+     */
     WgPresharedKey(const WgPresharedKey&) noexcept = default;
+
+    /**
+     * @brief Default copy assignment. Copies <TT>this->key</TT> from <TT>other.key</TT>.
+     * @return *this.
+     */
     WgPresharedKey& operator=(const WgPresharedKey&) noexcept = default;
 
+    /**
+     * @brief Move constructor. Copies <TT>this->key</TT> from <TT>other.key</TT> and calls <TT>other.key.makeZero</TT>.
+     * @param other other instance
+     */
     WgPresharedKey(WgPresharedKey&& other) noexcept;
+
+    /**
+     * @brief Move assignment. Copies <TT>this->key</TT> from <TT>other.key</TT> and calls <TT>other.key.makeZero</TT>.
+     * @param other other instance
+     * @return *this.
+     */
     WgPresharedKey& operator=(WgPresharedKey&& other) noexcept;
 
+    /**
+     * @brief Check whether key is in valid state.
+     * @retval true if <TT>WgPresharedKey::isGenerated == true</TT>.
+     * @retval false otherwise.
+     */
     virtual bool isProper() const noexcept override;
+
+    /**
+     * @brief Perform generating WgPresharedKey::key
+     */
     virtual void generate() override;
 };
 

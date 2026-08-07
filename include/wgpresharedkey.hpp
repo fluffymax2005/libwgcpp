@@ -19,7 +19,7 @@
 */
 
 template<typename TP>
-WgPresharedKey<TP>::WgPresharedKey() {
+WgPresharedKey<TP>::WgPresharedKey() noexcept {
     generate();
 }
 

@@ -18,8 +18,6 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "wgendpoint.h"
-
 #include <stdexcept>
 
 template<typename TP>
@@ -32,6 +30,9 @@ WgEndpoint<TP>::WgEndpoint() noexcept {
 template<typename TP>
 WgEndpoint<TP> WgEndpoint<TP>::create(const std::string& ip, uint16_t port) {
     WgEndpoint ep;
+
+    if (port == 0)
+        throw std::invalid_argument("Port number must be nonzero");
 
     if (inet_pton(AF_INET, ip.c_str(), &ep.endpoint.addr4.sin_addr) == 1) {
         ep.endpoint.addr4.sin_family = AF_INET;

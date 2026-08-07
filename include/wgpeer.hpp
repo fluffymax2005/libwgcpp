@@ -58,7 +58,7 @@ void WgPeer<TP>::setPresharedKey(WgPresharedKey<TP>&& key) {
 }
 
 template<typename TP>
-void WgPeer<TP>::setEndpoint(const WgEndpoint<TP>& endpoint) {
+void WgPeer<TP>::setEndpoint(const WgEndpoint<TP>& endpoint) noexcept {
     typename TP::Lock lock(mutex);
     if (peer == nullptr)
         return;

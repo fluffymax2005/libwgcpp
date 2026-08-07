@@ -18,6 +18,11 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file
+ * @brief Provides wg_endpoint struct class wrapper
+*/
+
 #ifndef WGENDPOINT_H
 #define WGENDPOINT_H
 
@@ -30,25 +35,60 @@ extern "C" {
 #include <arpa/inet.h>
 #include <string>
 
-
+/**
+ * @class WgEndpoint
+ * @brief Wrapper over wg_endpoint struct.
+ * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by default.
+ */
 template<typename ThreadPolicy = MultiThreaded>
 class WgEndpoint {
 public:
+
+    /**
+     * @brief Default constructor. Makes WgEndpoint::endpoint as if it contains "0.0.0.0:51820".
+     */
     WgEndpoint() noexcept;
 
-    // Trivial behaviour for copy ctor and assignment
+    /**
+     * @brief Copy constructor. Copies this->endpoint from other.endpoint.
+     */
     WgEndpoint(const WgEndpoint&) noexcept = default;
+
+    /**
+     * @brief Copy assignment. Copies this->endpoint from other.endpoint.
+     */
     WgEndpoint& operator=(const WgEndpoint&) noexcept = default;
 
-    // Trivial behaviour for move ctor and assignment
+    /**
+     * @brief Move constructor. Copies this->endpoint from other.endpoint.
+     */
     WgEndpoint(WgEndpoint&&) noexcept = default;
+
+    /**
+     * @brief Move assignment. Copies this->endpoint from other.endpoint.
+     */
     WgEndpoint& operator=(WgEndpoint&&) noexcept = default;
 
+    /**
+     * @brief Creates WgEndpoint instance with given ip address and port.
+     * @param ip string representation of IP address. IPv4 or IPv6.
+     * @param port port number from range [1; 65535]
+     * @return created instance
+     * @throws
+     * - std::invalid_argument if invalid ip address <b>OR</b> port number provided
+     */
     static WgEndpoint create(const std::string& ip, uint16_t port);
 
+    /**
+     * @brief Get endpoint pure wg_endpoint struct to directly read data
+     * @return WgEndpoint::endpoint
+     */
     const wg_endpoint& getStruct() const noexcept;
 
 private:
+    /**
+     * @brief Pure struct
+     */
     wg_endpoint endpoint{};
 };
 

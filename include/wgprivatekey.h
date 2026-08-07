@@ -18,24 +18,65 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file
+ * @brief Provides implementation for Wireguard private key
+ */
+
 #ifndef WGPRIVATEKEY_H
 #define WGPRIVATEKEY_H
 
 #include "wgkey.h"
 #include "threadsafety.h"
 
+/**
+ * @class WgPrivateKey
+ * @brief Implementation of Wireguard private key.
+ * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by default.
+ */
 template<typename ThreadPolicy = MultiThreaded>
 class WgPrivateKey : public WgKey<ThreadPolicy> {
 public:
-    WgPrivateKey();
 
+    /**
+     * @brief Default constructor. Calls WgPrivateKey::generate. Key is ready to insert by constructing
+     */
+    WgPrivateKey() noexcept;
+
+    /**
+     * @brief Default copy constructor. Copies <TT>this->key</TT> from <TT>other.key</TT>.
+     */
     WgPrivateKey(const WgPrivateKey&) noexcept = default;
+
+    /**
+     * @brief Default copy assignment. Copies <TT>this->key</TT> from <TT>other.key</TT>.
+     * @return *this.
+     */
     WgPrivateKey& operator=(const WgPrivateKey&) noexcept = default;
 
+    /**
+     * @brief Move constructor. Copies <TT>this->key</TT> from <TT>other.key</TT> and calls <TT>other.key.makeZero</TT>.
+     * @param other other instance
+     */
     WgPrivateKey(WgPrivateKey&& other) noexcept;
+
+    /**
+     * @brief Move assignment. Copies <TT>this->key</TT> from <TT>other.key</TT> and calls <TT>other.key.makeZero</TT>.
+     * @param other other instance
+     * @return *this.
+     */
     WgPrivateKey& operator=(WgPrivateKey&& other) noexcept;
 
+    /**
+     * @brief Check whether key is in valid state.
+     * @retval true if <TT>WgPrivateKey::isGenerated == true</TT>.
+     * @retval false otherwise.
+     */
     virtual bool isProper() const noexcept override;
+
+    /**
+     * @brief Perform generating WgPrivateKey::key
+     */
     virtual void generate() override;
 };
 

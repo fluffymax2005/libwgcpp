@@ -18,6 +18,11 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file
+ * @brief Provides implementation of base Wireguard key
+*/
+
 #ifndef WGKEY_H
 #define WGKEY_H
 
@@ -31,46 +36,112 @@ extern "C" {
 #include <array>
 #include <type_traits>
 
+/**
+ * @brief Length of Wireguard key
+ */
 constexpr uint32_t WG_KEY_LEN = sizeof(wg_key);
 
+/**
+ * @brief Key type
+ */
 enum class KeyType : uint8_t {
-    PRESHARED,
-    PRIVATE,
-    PUBLIC,
+    PRESHARED, ///< Preshared key
+    PRIVATE, ///< Private key
+    PUBLIC, ///< Public key
 };
 
+/**
+ * @brief operator| for wg_device_flags type
+ * @param a left side flag mask
+ * @param b right side flag mask
+ * @return result of bitwise or a and b
+ */
 inline enum wg_device_flags operator|(enum wg_device_flags a, enum wg_device_flags b) {
     return static_cast<wg_device_flags>(
         static_cast<int>(a) | static_cast<int>(b)
-        );
+    );
 }
 
+/**
+ * @brief operator|= for wg_device_flags type
+ * @param a left side flag mask
+ * @param b right side flag mask
+ * @return reference to a which is result of bitwise or a and b
+ */
 inline enum wg_device_flags& operator|=(enum wg_device_flags& a, enum wg_device_flags b) {
     a = a | b;
     return a;
 }
 
+/**
+ * @class WgKey
+ * @brief Base Wireguard key class
+ * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by default.
+ */
 template<typename ThreadPolicy = MultiThreaded>
 class WgKey {
 public:
+
+    /**
+     * @brief Type of element of key.
+     */
     using elem_t = std::remove_extent_t<wg_key>;
 
-    virtual ~WgKey() = default;
+    /**
+     * @brief Default virtual destructor.
+     */
+    virtual ~WgKey() noexcept = default;
 
+    /**
+     * @brief Checks whether WgKey::key content is valid.
+     * @return
+     */
     virtual bool isProper() const noexcept = 0;
+
+    /**
+     * @brief Generate key.
+     */
     virtual void generate() = 0;
 
+    /**
+     * @brief Get raw const pointer to key content.
+     * @return
+     */
     const elem_t* data() const noexcept;
+
+    /**
+     * @brief Get Wireguard key size.
+     * @return
+     */
     uint32_t size() const noexcept;
+
+    /**
+     * @brief Clone WgKey::key
+     * @return cloned WgKey::key
+     */
     std::array<elem_t, WG_KEY_LEN> cloneData() const noexcept;
-    bool initialize() noexcept;
+
+    /**
+     * @brief Set WgKey::key array to zero. Calls <TT>std::memset(key.data(), 0, WG_KEY_LEN)</TT>
+     */
     void makeZero() noexcept;
 
 protected:
+
+    /**
+     * @brief Array which contains Wireguard key
+     */
     std::array<elem_t, WG_KEY_LEN> key{};
 
+    /**
+     * @brief Field which describes if WgKey::key is in valid state
+     * @see WgKey::isProper
+     */
     bool isGenerated{false};
 
+    /**
+     * @brief Mutex to implement thread safety.
+     */
     mutable typename ThreadPolicy::Mutex mutex;
 };
 

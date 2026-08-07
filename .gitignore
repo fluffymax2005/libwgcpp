@@ -3,6 +3,7 @@
 **/debug/
 docs/html/*
 docs/latex/*
+docs/man/*
 scripts/*
 .qtcreator/*
 .vscode/*

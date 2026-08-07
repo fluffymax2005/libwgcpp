@@ -18,18 +18,46 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
+/**
+ * @file Contains custom exception to alert about runtime errors related to library
+ * @brief
+*/
+
+
 #ifndef WGEXCEPTION_H
 #define WGEXCEPTION_H
 
 #include <stdexcept>
 
+/**
+ * @brief Custom exception to alert about runtime errors related to library.
+ */
 class WgException : public std::runtime_error {
 public:
+
+    /**
+     * @brief Constructor. Make object with given error code.
+     * @param message string representation of error. Message should <b>not</b> end with '.'
+     * @param error_code error code
+     * @throw exceptions inherited by std::runtime_error
+     */
     WgException(const std::string& message, int error_code);
+
+    /**
+     * @brief Gives string representation of error.
+     * @return error string alike <TT>message + ". Error code = " + code</TT>.
+     */
     virtual const char* what() const noexcept override;
 
+    /**
+     * @brief Get error code
+     * @return WgException::code
+     */
     int getCode() const noexcept;
 protected:
+    /**
+     * @brief Error code
+     */
     int code;
 };
 

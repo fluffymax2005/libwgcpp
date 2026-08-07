@@ -19,7 +19,7 @@
 */
 
 template<typename TP>
-WgPrivateKey<TP>::WgPrivateKey() {
+WgPrivateKey<TP>::WgPrivateKey() noexcept {
     generate();
 }
 

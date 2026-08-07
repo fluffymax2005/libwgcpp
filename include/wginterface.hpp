@@ -18,7 +18,6 @@
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
 */
 
-
 template<typename TP>
 WgInterface<TP>::~WgInterface() noexcept {
     release();
@@ -175,15 +174,16 @@ void WgInterface<TP>::set() {
 }
 
 template<typename TP>
-void WgInterface<TP>::release() {
+void WgInterface<TP>::release() noexcept {
     typename TP::Lock lock(mutex);
     if (device && state != UNREGISTERED) {
         wg_del_device(device->name);
         state = UNREGISTERED;
 
         device.reset();
-        peers.clear();
     }
+
+    peers.clear();
 }
 
 template<typename TP>
@@ -199,7 +199,7 @@ std::vector<std::string> WgInterface<TP>::getPeers() const {
 
     std::vector<std::string> peers;
     wg_peer* peer;
-    wg_key_b64_string key;
+    WgKeyStringType key;
     wg_for_each_peer(dev, peer) {
         wg_key_to_base64(key, peer->public_key);
         try {
