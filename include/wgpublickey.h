@@ -93,6 +93,48 @@ private:
     WgPrivateKey<ThreadPolicy> private_key;
 };
 
-#include "wgpublickey.hpp"
+template<typename TP>
+WgPublicKey<TP>::WgPublicKey(WgPrivateKey<TP> private_key)
+    : private_key(private_key) {
+    generate();
+}
+
+template<typename TP>
+WgPublicKey<TP>::WgPublicKey(WgPublicKey&& other) noexcept {
+    if (this != &other) {
+        this->key = other.key;
+        private_key = other.private_key;
+
+        other.makeZero();
+        other.private_key.makeZero();
+    }
+}
+
+template<typename TP>
+WgPublicKey<TP>& WgPublicKey<TP>::operator=(WgPublicKey&& other) noexcept {
+    if (this != &other) {
+        this->key = other.key;
+        private_key = other.private_key;
+
+        other.makeZero();
+        other.private_key.makeZero();
+    }
+
+    return *this;
+}
+
+template<typename TP>
+bool WgPublicKey<TP>::isProper() const noexcept {
+    return this->isGenerated;
+}
+
+template<typename TP>
+void WgPublicKey<TP>::generate() {
+    typename TP::Lock lock(this->mutex);
+    if (!private_key.isProper())
+        throw std::runtime_error("Private key must be nonzero");
+    wg_generate_public_key(this->key.data(), private_key.data());
+    this->isGenerated = true;
+}
 
 #endif // WGPUBLICKEY_H

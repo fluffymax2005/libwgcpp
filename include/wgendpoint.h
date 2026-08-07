@@ -32,6 +32,7 @@ extern "C" {
 
 #include "threadsafety.h"
 
+#include <stdexcept>
 #include <arpa/inet.h>
 #include <string>
 
@@ -92,6 +93,36 @@ private:
     wg_endpoint endpoint{};
 };
 
-#include "wgendpoint.hpp"
+template<typename TP>
+WgEndpoint<TP>::WgEndpoint() noexcept {
+    // Default Wireguard port + phony ip addr
+    endpoint.addr4.sin_family = AF_INET;
+    endpoint.addr4.sin_port = htons(51820);
+}
+
+template<typename TP>
+WgEndpoint<TP> WgEndpoint<TP>::create(const std::string& ip, uint16_t port) {
+    WgEndpoint ep;
+
+    if (port == 0)
+        throw std::invalid_argument("Port number must be nonzero");
+
+    if (inet_pton(AF_INET, ip.c_str(), &ep.endpoint.addr4.sin_addr) == 1) {
+        ep.endpoint.addr4.sin_family = AF_INET;
+        ep.endpoint.addr4.sin_port = htons(port);
+    } else if (inet_pton(AF_INET6, ip.c_str(), &ep.endpoint.addr6.sin6_addr) == 1) {
+        ep.endpoint.addr6.sin6_family = AF_INET6;
+        ep.endpoint.addr6.sin6_port = htons(port);
+    } else {
+        throw std::invalid_argument("Invalid IP: " + ip);
+    }
+
+    return ep;
+}
+
+template<typename TP>
+const wg_endpoint& WgEndpoint<TP>::getStruct() const noexcept {
+    return endpoint;
+}
 
 #endif // WGENDPOINT_H

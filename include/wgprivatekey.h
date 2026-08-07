@@ -80,6 +80,39 @@ public:
     virtual void generate() override;
 };
 
-#include "wgprivatekey.hpp"
+template<typename TP>
+WgPrivateKey<TP>::WgPrivateKey() noexcept {
+    generate();
+}
+
+template<typename TP>
+WgPrivateKey<TP>::WgPrivateKey(WgPrivateKey<TP>&& other) noexcept {
+    if (this != &other) {
+        this->key = other.key;
+        other.makeZero();
+    }
+}
+
+template<typename TP>
+WgPrivateKey<TP>& WgPrivateKey<TP>::operator=(WgPrivateKey&& other) noexcept {
+    if (this != &other) {
+        this->key = other.key;
+        other.makeZero();
+    }
+
+    return *this;
+}
+
+template<typename TP>
+bool WgPrivateKey<TP>::isProper() const noexcept {
+    return this->isGenerated;
+}
+
+template<typename TP>
+void WgPrivateKey<TP>::generate() {
+    typename TP::Lock lock(this->mutex);
+    wg_generate_private_key(this->key.data());
+    this->isGenerated = true;
+}
 
 #endif // WGPRIVATEKEY_H

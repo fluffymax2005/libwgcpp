@@ -32,6 +32,7 @@ extern "C" {
 
 #include "threadsafety.h"
 
+#include <cstring>
 #include <cstdint>
 #include <array>
 #include <type_traits>
@@ -106,7 +107,7 @@ public:
     /**
      * @brief Get raw const pointer to key content.
      * @return
-     */
+    */
     const elem_t* data() const noexcept;
 
     /**
@@ -145,6 +146,27 @@ protected:
     mutable typename ThreadPolicy::Mutex mutex;
 };
 
-#include "wgkey.hpp"
+template<typename TP>
+const typename WgKey<TP>::elem_t* WgKey<TP>::data() const noexcept {
+    return key.data();
+}
+
+template<typename TP>
+uint32_t WgKey<TP>::size() const noexcept {
+    return WG_KEY_LEN;
+}
+
+template<typename TP>
+std::array<typename WgKey<TP>::elem_t, WG_KEY_LEN> WgKey<TP>::cloneData() const noexcept {
+    typename TP::Lock lock(mutex);
+    return key;
+}
+
+template<typename TP>
+void WgKey<TP>::makeZero() noexcept {
+    typename TP::Lock lock(mutex);
+    std::memset(key.data(), 0, WG_KEY_LEN);
+    isGenerated = false;
+}
 
 #endif // WGKEY_H

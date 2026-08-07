@@ -80,6 +80,39 @@ public:
     virtual void generate() override;
 };
 
-#include "wgpresharedkey.hpp"
+template<typename TP>
+WgPresharedKey<TP>::WgPresharedKey() noexcept {
+    generate();
+}
+
+template<typename TP>
+WgPresharedKey<TP>::WgPresharedKey(WgPresharedKey<TP>&& other) noexcept {
+    if (this != &other) {
+        this->key = other.key;
+        other.makeZero();
+    }
+}
+
+template<typename TP>
+WgPresharedKey<TP>& WgPresharedKey<TP>::operator=(WgPresharedKey&& other) noexcept {
+    if (this != &other) {
+        this->key = other.key;
+        other.makeZero();
+    }
+
+    return *this;
+}
+
+template<typename TP>
+bool WgPresharedKey<TP>::isProper() const noexcept {
+    return this->isGenerated;
+}
+
+template<typename TP>
+void WgPresharedKey<TP>::generate() {
+    typename TP::Lock lock(this->mutex);
+    wg_generate_preshared_key(this->key.data());
+    this->isGenerated = true;
+}
 
 #endif // WGPRESHAREDKEY_H
