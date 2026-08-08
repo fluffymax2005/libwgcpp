@@ -40,7 +40,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 ```
 
-For Giverse mirror:
+For Gitverse mirror:
 ```shell
 git clone -b master https://gitverse.ru/fluffymax2005/libwgcpp.git
 mkdir -p build && cd build
