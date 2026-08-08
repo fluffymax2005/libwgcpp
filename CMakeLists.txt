@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 project(wgcpp VERSION 1.0.0 LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDART 17)
+set(CMAKE_CXX_STANDART_REQUIRED ON)
+
 add_library(wgcpp SHARED
 
     embeddable-wg-library/wireguard.c
@@ -22,6 +25,7 @@ add_library(wgcpp SHARED
     include/wgendpoint.h
 
     include/threadsafety.h
+    README.md
 )
 
 target_include_directories(wgcpp
