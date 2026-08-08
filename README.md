@@ -76,7 +76,7 @@ compile time errors.
 
 # Contributing
 If found any (critial) vulnerabilities create 
-[issue]("https://github.com/fluffymax2005/libwgcpp/issues/new")
+[issue](https://github.com/fluffymax2005/libwgcpp/issues/new)
 on Github and tell about it using template:
 * Brief description of vulnerability
 * File(s) where you found it
