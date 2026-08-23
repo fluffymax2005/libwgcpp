@@ -50,6 +50,7 @@ install(EXPORT wgcppTargets
 
 install(DIRECTORY include/ DESTINATION include/libwgcpp)
 install(FILES README.md DESTINATION share/doc/libwgcpp)
+install(FILES embeddable-wg-library/wireguard.h DESTINATION include/libwgcpp)
 
 include(CMakePackageConfigHelpers)
 configure_package_config_file(

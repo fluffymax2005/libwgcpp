@@ -1,6 +1,7 @@
 # Ignore directories
 **/build/
 **/debug/
+**/.cache/
 docs/html/*
 docs/latex/*
 docs/man/*
