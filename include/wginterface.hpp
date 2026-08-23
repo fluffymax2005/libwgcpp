@@ -32,7 +32,7 @@ extern "C" {
 }
 
 #include "threadsafety.hpp"
-#include "wgexception.hpp"
+#include "wgexception.h"
 #include "wgpeer.hpp"
 #include "wgpublickey.hpp"
 

@@ -1,6 +1,7 @@
 /*
  * libwgcpp — C++ wrapper for embeddable-wg-library
- * Copyright (C) 2026  Ledovskiy Maksim aka fluffymax2005 <santech_montage@mail.ru>
+ * Copyright (C) 2026  Ledovskiy Maksim aka fluffymax2005
+ * <santech_montage@mail.ru>
  *
  * This file is part of libwgcpp.
  *
@@ -16,21 +17,17 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
-*/
+ */
 
 #include "wgexception.h"
 
-WgException::WgException(const std::string& message, int error_code)
-    : std::runtime_error(message + ". Error code = " + std::to_string(error_code))
-    , code{error_code} {
+WgException::WgException(const std::string &message, int error_code)
+    : std::runtime_error(message +
+                         ". Error code = " + std::to_string(error_code)),
+      code{error_code} {}
+
+const char *WgException::what() const noexcept {
+  return std::runtime_error::what();
 }
 
-const char* WgException::what() const noexcept {
-    return std::runtime_error::what();
-}
-
-int WgException::getCode() const noexcept {
-    return code;
-}
-
-
+int WgException::getCode() const noexcept { return code; }

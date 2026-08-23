@@ -16,7 +16,7 @@ set_source_files_properties(
 
 target_sources(wgcpp PRIVATE
     include/wginterface.hpp
-    include/wgexception.hpp
+    include/wgexception.h
     include/wgkey.hpp
     include/wgpresharedkey.hpp
     include/wgprivatekey.hpp
