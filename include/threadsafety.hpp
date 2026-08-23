@@ -1,6 +1,7 @@
 /*
  * libwgcpp — C++ wrapper for embeddable-wg-library
- * Copyright (C) 2026  Ledovskiy Maksim aka fluffymax2005 <santech_montage@mail.ru>
+ * Copyright (C) 2026  Ledovskiy Maksim aka fluffymax2005
+ * <santech_montage@mail.ru>
  *
  * This file is part of libwgcpp.
  *
@@ -16,7 +17,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with libwgcpp. If not, see <https://www.gnu.org/licenses/>.
-*/
+ */
 
 /**
  * @file
@@ -29,43 +30,45 @@
 #include <mutex>
 
 /**
- * @brief Struct for single threaded app. Provides phony methods and types for working.
+ * @brief Struct for single threaded app. Provides phony methods and types for
+ * working.
  */
 struct SingleThreaded {
+  /**
+   * @brief Phony mutex struct. Methods does nothing.
+   */
+  struct Mutex {
     /**
-     * @brief Phony mutex struct. Methods does nothing.
+     * @brief Does not lock anything.
      */
-    struct Mutex {
-        /**
-         * @brief Does not lock anything.
-         */
-        inline void lock() {}
-
-        /**
-         * @brief Does not unlock anything.
-         */
-        inline void unlock() {}
-    };
+    inline void lock() {}
 
     /**
-     * @brief Empty struct which should do nothing.
+     * @brief Does not unlock anything.
      */
-    using Lock = Mutex;
+    inline void unlock() {}
+  };
+
+  /**
+   * @brief Empty struct which should do nothing.
+   */
+  using Lock = Mutex;
 };
 
 /**
- * @brief Struct for multi threaded app. Provides STL methods and types for working.
+ * @brief Struct for multi threaded app. Provides STL methods and types for
+ * working.
  */
 struct MultiThreaded {
-    /**
-     * @brief Standart std::mutex mutex.
-     */
-    using Mutex = std::mutex;
+  /**
+   * @brief Standart std::mutex mutex.
+   */
+  using Mutex = std::mutex;
 
-    /**
-     * @brief Standart RAII based guard for mutex.
-     */
-    using Lock = std::lock_guard<std::mutex>;
+  /**
+   * @brief Standart RAII based guard for mutex.
+   */
+  using Lock = std::lock_guard<std::mutex>;
 };
 
 #endif // THREADSAFETY_H

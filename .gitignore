@@ -17,4 +17,5 @@ scripts/*
 *.tmp
 *.backup
 
-
+# Ignore concrete files
+compile_commands.json
