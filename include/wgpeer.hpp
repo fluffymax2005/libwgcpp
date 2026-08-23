@@ -229,6 +229,16 @@ public:
   void addAllowedIP(const WgAllowedIP<ThreadPolicy> &ip);
 
   /**
+   * @brief Add AllowedIP.
+   * @param ip allowed ip instance
+   * @throw std::bad_alloc by std::make_unique<WgAllowedIP<ThreadPolicy>>;
+   * @throw std::bad_alloc by std::forward_list::push_front;
+   * @note Strong exception guarantee: if an exception is thrown,
+   *      the object remains in its original state.
+   */
+  void addAllowedIP(WgAllowedIP<ThreadPolicy> &&ip);
+
+  /**
    * @brief Remove allowed ip provided by cidr
    * @param cidr CIDR string representation
    * @note If CIDR is invalid method does nothing
@@ -380,6 +390,16 @@ void WgPeer<TP>::addAllowedIP(const WgAllowedIP<TP> &ip) {
     return;
 
   ips.push_front(std::make_unique<WgAllowedIP<TP>>(ip));
+
+  invalidateAllowedIPs();
+}
+
+template <typename TP> void WgPeer<TP>::addAllowedIP(WgAllowedIP<TP> &&ip) {
+  typename TP::Lock lock(mutex);
+  if (peer == nullptr)
+    return;
+
+  ips.push_front(std::make_unique<WgAllowedIP<TP>>(std::move(ip)));
 
   invalidateAllowedIPs();
 }
