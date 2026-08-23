@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(wgcpp VERSION 1.2.0 LANGUAGES C CXX)
+project(wgcpp VERSION 1.3.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,16 +15,16 @@ set_source_files_properties(
 )
 
 target_sources(wgcpp PRIVATE
-    include/wginterface.h
-    include/wgexception.h
-    include/wgkey.h
-    include/wgpresharedkey.h
-    include/wgprivatekey.h
-    include/wgpublickey.h
-    include/wgpeer.h
-    include/wgallowedip.h
-    include/wgendpoint.h
-    include/threadsafety.h
+    include/wginterface.hpp
+    include/wgexception.hpp
+    include/wgkey.hpp
+    include/wgpresharedkey.hpp
+    include/wgprivatekey.hpp
+    include/wgpublickey.hpp
+    include/wgpeer.hpp
+    include/wgallowedip.hpp
+    include/wgendpoint.hpp
+    include/threadsafety.hpp
 
     README.md
 )
