@@ -209,7 +209,7 @@ public:
   void setPersistentKeepAlive(uint16_t time) const noexcept;
 
   /**
-   * @brief Consider that peer contains key.
+   * @brief Consider that peer contains public key.
    * @param key public key to check
    * @retval true if:
    * - <TT>peer != nullptr;
@@ -217,6 +217,16 @@ public:
    * @retval false otherwise.
    */
   bool hasPublicKey(const WgPublicKey<ThreadPolicy> &key) const noexcept;
+
+  /**
+   * @brief Consider that peer contains preshared key.
+   * @param key preshared key to check
+   * @retval true if:
+   * - <TT>peer != nullptr;
+   * - <TT>peer->preshared_key equals key.data().
+   * @retval false otherwise.
+   */
+  bool hasPresharedKey(const WgPresharedKey<ThreadPolicy> &key) const noexcept;
 
   /**
    * @brief Add AllowedIP.
@@ -371,6 +381,15 @@ bool WgPeer<TP>::hasPublicKey(const WgPublicKey<TP> &key) const noexcept {
     return false;
 
   return std::memcmp(peer->public_key, key.data(), WG_KEY_LEN) == 0;
+}
+
+template <typename TP>
+bool WgPeer<TP>::hasPresharedKey(const WgPresharedKey<TP> &key) const noexcept {
+  typename TP::Lock lock(mutex);
+  if (peer == nullptr)
+    return false;
+
+  return std::memcmp(peer->preshared_key, key.data(), WG_KEY_LEN) == 0;
 }
 
 template <typename TP>
