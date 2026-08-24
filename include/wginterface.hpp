@@ -143,6 +143,23 @@ public:
   bool inline hasPrivateKey() const noexcept;
 
   /**
+   * @brief Consider whether interface has peer with given public key
+   * @param key peer's public key to check
+   * @retval true if exists.
+   * @retval false otherwise.
+   */
+  bool hasPeerWithPublicKey(const WgPublicKey<ThreadPolicy> key) const noexcept;
+
+  /**
+   * @brief Consider whether interface has peer with given preshared key
+   * @param key peer's presahred key to check
+   * @retval true if exists.
+   * @retval false otherwise.
+   */
+  bool hasPeerWithPresharedKey(
+      const WgPresharedKey<ThreadPolicy> key) const noexcept;
+
+  /**
    * @brief Consider whether device is listening. "Listening" means that port is
    * valid and approtiate flag is set.
    * @retval true if:
@@ -330,6 +347,23 @@ protected:
 template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
 
 template <typename TP>
+bool WgInterface<TP>::hasPeerWithPublicKey(
+    const WgPublicKey<TP> key) const noexcept {
+  auto it = std::find_if(peers.cbegin(), peers.cend(),
+                         [&key](const auto &peer) { peer.hasPublicKey(key); });
+  return it != peers.cend();
+}
+
+template <typename TP>
+bool WgInterface<TP>::hasPeerWithPresharedKey(
+    const WgPresharedKey<TP> key) const noexcept {
+  auto it =
+      std::find_if(peers.cbegin(), peers.cend(),
+                   [&key](const auto &peer) { peer.hasPresharedKey(key); });
+  return it != peers.cend();
+}
+
+template <typename TP>
 WgInterface<TP>::WgInterface(WgInterface &&other) noexcept {
   if (this != &other) {
     release();
@@ -426,13 +460,15 @@ void WgInterface<TP>::setPrivateKey(WgPrivateKey<TP> &&private_key,
 }
 
 template <typename TP> void WgInterface<TP>::addPeer(WgPeer<TP> &&peer) {
-  typename TP::Lock lock(mutex);
-  if (peer == nullptr)
-    return;
-  peers.push_front(std::make_unique<WgPeer<TP>>(std::move(peer)));
+  {
+    typename TP::Lock lock(mutex);
+    if (peer == nullptr)
+      return;
+    peers.push_front(std::make_unique<WgPeer<TP>>(std::move(peer)));
 
-  // Invalidate peers connections
-  invalidatePeers();
+    // Invalidate peers connections
+    invalidatePeers();
+  }
 
   // Apply changes if interface is on
   if (state == POWEREDON) {
