@@ -148,7 +148,8 @@ public:
    * @retval true if exists.
    * @retval false otherwise.
    */
-  bool hasPeerWithPublicKey(const WgPublicKey<ThreadPolicy> key) const noexcept;
+  bool
+  hasPeerWithPublicKey(const WgPublicKey<ThreadPolicy> &key) const noexcept;
 
   /**
    * @brief Consider whether interface has peer with given preshared key
@@ -157,7 +158,7 @@ public:
    * @retval false otherwise.
    */
   bool hasPeerWithPresharedKey(
-      const WgPresharedKey<ThreadPolicy> key) const noexcept;
+      const WgPresharedKey<ThreadPolicy> &key) const noexcept;
 
   /**
    * @brief Consider whether device is listening. "Listening" means that port is
@@ -348,7 +349,7 @@ template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
 
 template <typename TP>
 bool WgInterface<TP>::hasPeerWithPublicKey(
-    const WgPublicKey<TP> key) const noexcept {
+    const WgPublicKey<TP> &key) const noexcept {
   auto it = std::find_if(peers.cbegin(), peers.cend(),
                          [&key](const auto &peer) { peer.hasPublicKey(key); });
   return it != peers.cend();
@@ -356,7 +357,7 @@ bool WgInterface<TP>::hasPeerWithPublicKey(
 
 template <typename TP>
 bool WgInterface<TP>::hasPeerWithPresharedKey(
-    const WgPresharedKey<TP> key) const noexcept {
+    const WgPresharedKey<TP> &key) const noexcept {
   auto it =
       std::find_if(peers.cbegin(), peers.cend(),
                    [&key](const auto &peer) { peer.hasPresharedKey(key); });
