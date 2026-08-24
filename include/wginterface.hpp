@@ -350,8 +350,10 @@ template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
 template <typename TP>
 bool WgInterface<TP>::hasPeerWithPublicKey(
     const WgPublicKey<TP> &key) const noexcept {
-  auto it = std::find_if(peers.cbegin(), peers.cend(),
-                         [&key](const auto &peer) { peer.hasPublicKey(key); });
+  auto it =
+      std::find_if(peers.cbegin(), peers.cend(), [&key](const auto &peer) {
+        return peer->hasPublicKey(key);
+      });
   return it != peers.cend();
 }
 
@@ -359,8 +361,9 @@ template <typename TP>
 bool WgInterface<TP>::hasPeerWithPresharedKey(
     const WgPresharedKey<TP> &key) const noexcept {
   auto it =
-      std::find_if(peers.cbegin(), peers.cend(),
-                   [&key](const auto &peer) { peer.hasPresharedKey(key); });
+      std::find_if(peers.cbegin(), peers.cend(), [&key](const auto &peer) {
+        return peer->hasPresharedKey(key);
+      });
   return it != peers.cend();
 }
 
