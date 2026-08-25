@@ -43,6 +43,7 @@ extern "C" {
 #include <forward_list>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -196,6 +197,23 @@ public:
   uint32_t getFWMark() const noexcept;
 
   /**
+   * @brief Get interface's public key.
+   * @return public key new instance if <TT>WgInterface::hasPrivateKey ==
+   * true</TT>. Does not remove current one from interface.
+   */
+  std::optional<WgPublicKey<ThreadPolicy>> getPublicKey() const noexcept;
+
+  /**
+   * @brief Get interface's private key.
+   * @return private key new instance if <TT>WgInterface::hasPrivateKey ==
+   * true</TT>. Does not remove current one from interface.
+   * @warning Get private key only in case if you know what you do as
+   * unathorized persons must **not** know it. Therioretically it should not
+   * leak from interface but there might some cases it's forced risk.
+   */
+  std::optional<WgPrivateKey<ThreadPolicy>> getPrivateKey() const noexcept;
+
+  /**
    * @brief Set listening port.
    * @param port number
    * @throw
@@ -250,6 +268,9 @@ public:
    * @param force Whether interface should apply changed if it set on. If
    * <TT>WgInterface::state != InterfaceState::POWEREDON</TT> behaves as if
    * <TT>force == false</TT>.
+   * @throw WgException if <TT>WgInterface::isSet == true</TT> and <TT>force ==
+   * false</TT>
+   * @note Sets public key for instance based on given private_key
    * @warning <b>Changing</b> interface's private key if some peer are connected
    * to it might lead to connection loss. Use with caution.
    */
@@ -346,6 +367,26 @@ protected:
 };
 
 template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
+
+template <typename TP>
+std::optional<WgPublicKey<TP>> WgInterface<TP>::getPublicKey() const noexcept {
+  if (!hasPrivateKey())
+    return std::nullopt;
+  typename WgKey<TP>::key_type key_data;
+  std::memcpy(key_data.data(), device->public_key, sizeof(device->public_key));
+  return WgPublicKey<TP>{key_data};
+}
+
+template <typename TP>
+std::optional<WgPrivateKey<TP>>
+WgInterface<TP>::getPrivateKey() const noexcept {
+  if (!hasPrivateKey())
+    return std::nullopt;
+  typename WgKey<TP>::key_type key_data;
+  std::memcpy(key_data.data(), device->private_key,
+              sizeof(device->private_key));
+  return WgPublicKey<TP>{key_data};
+}
 
 template <typename TP>
 bool WgInterface<TP>::hasPeerWithPublicKey(
