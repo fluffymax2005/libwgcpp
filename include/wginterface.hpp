@@ -370,7 +370,8 @@ template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
 
 template <typename TP>
 std::optional<WgPublicKey<TP>> WgInterface<TP>::getPublicKey() const noexcept {
-  if (!hasPrivateKey())
+  typename TP::Lock lock(mutex);
+  if (device == nullptr || !hasPrivateKey())
     return std::nullopt;
   typename WgKey<TP>::key_type key_data;
   std::memcpy(key_data.data(), device->public_key, sizeof(device->public_key));
@@ -380,17 +381,19 @@ std::optional<WgPublicKey<TP>> WgInterface<TP>::getPublicKey() const noexcept {
 template <typename TP>
 std::optional<WgPrivateKey<TP>>
 WgInterface<TP>::getPrivateKey() const noexcept {
-  if (!hasPrivateKey())
+  typename TP::Lock lock(mutex);
+  if (device == nullptr || !hasPrivateKey())
     return std::nullopt;
   typename WgKey<TP>::key_type key_data;
   std::memcpy(key_data.data(), device->private_key,
               sizeof(device->private_key));
-  return WgPublicKey<TP>{key_data};
+  return WgPrivateKey<TP>{key_data};
 }
 
 template <typename TP>
 bool WgInterface<TP>::hasPeerWithPublicKey(
     const WgPublicKey<TP> &key) const noexcept {
+  typename TP::Lock lock(mutex);
   auto it =
       std::find_if(peers.cbegin(), peers.cend(), [&key](const auto &peer) {
         return peer->hasPublicKey(key);
@@ -401,6 +404,7 @@ bool WgInterface<TP>::hasPeerWithPublicKey(
 template <typename TP>
 bool WgInterface<TP>::hasPeerWithPresharedKey(
     const WgPresharedKey<TP> &key) const noexcept {
+  typename TP::Lock lock(mutex);
   auto it =
       std::find_if(peers.cbegin(), peers.cend(), [&key](const auto &peer) {
         return peer->hasPresharedKey(key);
@@ -410,6 +414,7 @@ bool WgInterface<TP>::hasPeerWithPresharedKey(
 
 template <typename TP>
 WgInterface<TP>::WgInterface(WgInterface &&other) noexcept {
+  typename TP::Lock lock(mutex);
   if (this != &other) {
     release();
 
@@ -431,10 +436,12 @@ template <typename TP> WgInterface<TP>::WgInterface(const char *name) {
 }
 
 template <typename TP> bool WgInterface<TP>::hasDevice() const noexcept {
+  typename TP::Lock lock(mutex);
   return device.get();
 }
 
 template <typename TP> bool WgInterface<TP>::hasPrivateKey() const noexcept {
+  typename TP::Lock lock(mutex);
   if (device) {
     return device->flags & WGDEVICE_HAS_PRIVATE_KEY;
   }
@@ -442,6 +449,7 @@ template <typename TP> bool WgInterface<TP>::hasPrivateKey() const noexcept {
 }
 
 template <typename TP> bool WgInterface<TP>::isListening() const noexcept {
+  typename TP::Lock lock(mutex);
   if (device) {
     return device->flags & WGDEVICE_HAS_LISTEN_PORT && device->listen_port;
   }
@@ -449,18 +457,22 @@ template <typename TP> bool WgInterface<TP>::isListening() const noexcept {
 }
 
 template <typename TP> bool WgInterface<TP>::isSet() const noexcept {
+  typename TP::Lock lock(mutex);
   return state == POWEREDON;
 }
 
 template <typename TP> const char *WgInterface<TP>::getName() const noexcept {
+  typename TP::Lock lock(mutex);
   return device ? device->name : nullptr;
 }
 
 template <typename TP> uint16_t WgInterface<TP>::getPort() const noexcept {
+  typename TP::Lock lock(mutex);
   return device ? device->listen_port : 0;
 }
 
 template <typename TP> uint32_t WgInterface<TP>::getFWMark() const noexcept {
+  typename TP::Lock lock(mutex);
   return device ? device->fwmark : std::numeric_limits<uint32_t>::max();
 }
 
@@ -663,6 +675,7 @@ void WgInterface<ThreadPolicy>::setNameAbstr(const char *name) {
 
 template <typename TP>
 WgInterface<TP> &WgInterface<TP>::operator=(WgInterface &&other) noexcept {
+  typename TP::Lock lock(mutex);
   if (this != &other) {
     release();
 
