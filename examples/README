@@ -13,7 +13,9 @@ To try out example files enter following commands:
 make FILE=<name_of_example_file>
 ./build/<name_of_example_file>
 
-Note: DO NOT enter full filename. For example, instead of "example1.cpp" use "example1"
+Note: 
+1. DO NOT enter full filename. For example, instead of "example1.cpp" use "example1".
+2. Library must be installed to compile examples.
 
 Dependencies
 ------------

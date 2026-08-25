@@ -33,6 +33,7 @@ with minimum overhead as possible
 
 - libc
 - C++17 STL
+- ioctl
 
 # Build
 
@@ -42,7 +43,7 @@ For Github:
 
 ```shell
 git clone -b master https://github.com/fluffymax2005/libwgcpp.git
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .
+cmake -B build -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_INSTALL_PREFIX=/usr .
 cd build
 make
 sudo make install
@@ -52,7 +53,7 @@ For Gitverse mirror:
 
 ```shell
 git clone -b master https://gitverse.ru/fluffymax2005/libwgcpp.git
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .
+cmake -B build -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_INSTALL_PREFIX=/usr .
 cd build
 make
 sudo make install

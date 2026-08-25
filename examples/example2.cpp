@@ -1,5 +1,5 @@
-#include "wginterface.h"
-#include "wgendpoint.h"
+#include <libwgcpp/wginterface.hpp>
+#include <libwgcpp/wgendpoint.hpp>
 
 #include <iostream>
 #include <chrono>

@@ -1,4 +1,4 @@
-#include "wginterface.h"
+#include <libwgcpp/wginterface.hpp>
 #include <iostream>
 
 int main() {
