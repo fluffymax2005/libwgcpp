@@ -27,6 +27,7 @@
 #ifndef __WG_INTERFACE__
 #define __WG_INTERFACE__
 
+
 extern "C" {
 #include "wireguard.h"
 }
@@ -35,6 +36,11 @@ extern "C" {
 #include "wgexception.h"
 #include "wgpeer.hpp"
 #include "wgpublickey.hpp"
+
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <linux/netlink.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <cerrno>
@@ -556,13 +562,35 @@ void WgInterface<TP>::removePeer(const WgPublicKey<TP> &key) {
 
 template <typename TP> void WgInterface<TP>::set() {
   typename TP::Lock lock(mutex);
-  if (device) {
-    if (wg_set_device(device.get()) < 0)
-      throw WgException("Interface \"" + std::string(device->name) +
-                            "\" is unable to be set",
-                        errno);
-    state = POWEREDON;
+  if (device == nullptr)
+    return;
+
+  if (wg_set_device(device.get()) < 0)
+    throw WgException("Interface \"" + std::string(device->name) +
+                          "\" is unable to be set",
+                      errno);
+
+              
+  int sock = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sock < 0)
+    throw WgException(std::string("Failed to create socket for interface \"") + device->name + '\"', errno);
+  struct ifreq ifr{};
+  std::strncpy(ifr.ifr_ifrn.ifrn_name, device->name, IFNAMSIZ);
+
+  if (ioctl(sock, SIOCGIFFLAGS, &ifr) != 0) {
+    close(sock);
+    throw WgException(std::string("Failed to read configuration for interface \"") + device->name + '\"', errno);
   }
+
+  ifr.ifr_ifru.ifru_flags |= IFF_UP;
+
+  if (ioctl(sock, SIOCSIFFLAGS, &ifr) != 0) {
+      close(sock);
+      throw WgException(std::string("Failed to set on interface \"") + device->name + '\"', errno);
+  }
+
+  close(sock); 
+  state = POWEREDON;
 }
 
 template <typename TP> void WgInterface<TP>::release() noexcept {
