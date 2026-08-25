@@ -394,7 +394,7 @@ WgInterface<TP>::getPrivateKey() const noexcept {
   {
     typename TP::Lock lock(mutex);
     if (device == nullptr)
-      return std : nullopt;
+      return std::nullopt;
   }
   if (!hasPrivateKey())
     return std::nullopt;
