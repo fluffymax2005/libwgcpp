@@ -128,7 +128,7 @@ template <typename TP>
 WgPublicKey<TP>::WgPublicKey(WgPublicKey &&other) noexcept {
   if (this != &other) {
     this->key = other.key;
-    private_key = other.private_key;
+    private_key = std::move(other.private_key);
 
     other.makeZero();
     other.private_key.makeZero();
@@ -139,7 +139,7 @@ template <typename TP>
 WgPublicKey<TP> &WgPublicKey<TP>::operator=(WgPublicKey &&other) noexcept {
   if (this != &other) {
     this->key = other.key;
-    private_key = other.private_key;
+    private_key = std::move(other.private_key);
 
     other.makeZero();
     other.private_key.makeZero();
