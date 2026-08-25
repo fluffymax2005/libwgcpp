@@ -27,7 +27,6 @@
 #ifndef __WG_INTERFACE__
 #define __WG_INTERFACE__
 
-
 extern "C" {
 #include "wireguard.h"
 }
@@ -37,9 +36,9 @@ extern "C" {
 #include "wgpeer.hpp"
 #include "wgpublickey.hpp"
 
-#include <sys/ioctl.h>
-#include <net/if.h>
 #include <linux/netlink.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -227,7 +226,7 @@ public:
    * @note Strong exception guarantee: if an exception is thrown,
    *      the object remains in its original state.
    */
-  void setListeningPort(uint16_t port) const;
+  void setListenPort(uint16_t port) const noexcept;
 
   /**
    * @brief Set FWMark.
@@ -376,9 +375,14 @@ template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
 
 template <typename TP>
 std::optional<WgPublicKey<TP>> WgInterface<TP>::getPublicKey() const noexcept {
-  typename TP::Lock lock(mutex);
-  if (device == nullptr || !hasPrivateKey())
+  {
+    typename TP::Lock lock(mutex);
+    if (device == nullptr)
+      return std::nullopt;
+  }
+  if (!hasPrivateKey())
     return std::nullopt;
+  typename TP::Lock lock(mutex);
   typename WgKey<TP>::key_type key_data;
   std::memcpy(key_data.data(), device->public_key, sizeof(device->public_key));
   return WgPublicKey<TP>{key_data};
@@ -387,9 +391,14 @@ std::optional<WgPublicKey<TP>> WgInterface<TP>::getPublicKey() const noexcept {
 template <typename TP>
 std::optional<WgPrivateKey<TP>>
 WgInterface<TP>::getPrivateKey() const noexcept {
-  typename TP::Lock lock(mutex);
-  if (device == nullptr || !hasPrivateKey())
+  {
+    typename TP::Lock lock(mutex);
+    if (device == nullptr)
+      return std : nullopt;
+  }
+  if (!hasPrivateKey())
     return std::nullopt;
+  typename TP::Lock lock(mutex);
   typename WgKey<TP>::key_type key_data;
   std::memcpy(key_data.data(), device->private_key,
               sizeof(device->private_key));
@@ -483,12 +492,8 @@ template <typename TP> uint32_t WgInterface<TP>::getFWMark() const noexcept {
 }
 
 template <typename TP>
-void WgInterface<TP>::setListeningPort(uint16_t port) const {
+void WgInterface<TP>::setListenPort(uint16_t port) const {
   typename TP::Lock lock(mutex);
-  if (port == 0)
-    throw std::invalid_argument("Invalid port for interface \"" +
-                                (device ? std::string(device->name) : "") +
-                                "\" is given");
   if (device) {
     device->listen_port = port;
     device->flags |= WGDEVICE_HAS_LISTEN_PORT;
@@ -570,26 +575,32 @@ template <typename TP> void WgInterface<TP>::set() {
                           "\" is unable to be set",
                       errno);
 
-              
   int sock = socket(AF_INET, SOCK_DGRAM, 0);
   if (sock < 0)
-    throw WgException(std::string("Failed to create socket for interface \"") + device->name + '\"', errno);
+    throw WgException(std::string("Failed to create socket for interface \"") +
+                          device->name + '\"',
+                      errno);
   struct ifreq ifr{};
   std::strncpy(ifr.ifr_ifrn.ifrn_name, device->name, IFNAMSIZ);
 
   if (ioctl(sock, SIOCGIFFLAGS, &ifr) != 0) {
     close(sock);
-    throw WgException(std::string("Failed to read configuration for interface \"") + device->name + '\"', errno);
+    throw WgException(
+        std::string("Failed to read configuration for interface \"") +
+            device->name + '\"',
+        errno);
   }
 
   ifr.ifr_ifru.ifru_flags |= IFF_UP;
 
   if (ioctl(sock, SIOCSIFFLAGS, &ifr) != 0) {
-      close(sock);
-      throw WgException(std::string("Failed to set on interface \"") + device->name + '\"', errno);
+    close(sock);
+    throw WgException(std::string("Failed to set on interface \"") +
+                          device->name + '\"',
+                      errno);
   }
 
-  close(sock); 
+  close(sock);
   state = POWEREDON;
 }
 
