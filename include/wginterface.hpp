@@ -598,10 +598,9 @@ void WgInterface<TP>::removePeer(const WgPublicKey<TP> &key) {
     return;
 
   typename TP::Lock lock(mutex);
-  auto it = std::find_if(peers.begin(), peers.end(),
-                         [&key](const std::unique_ptr<WgPeer<TP>> &ptr) {
-                           return ptr->hasPublicKey(key);
-                         });
+  auto it = std::find_if(peers.begin(), peers.end(), [&key](const auto &ptr) {
+    return ptr->hasPublicKey(key);
+  });
 
   if (it != peers.end()) {
     it->get()->remove();
