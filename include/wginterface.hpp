@@ -114,7 +114,7 @@ public:
    * - Must not be empty;
    * - Allowed characters: [a-zA-Z0-9_\-\.].
    * @throw
-   * - WgException with reason and error code. See <linux/socket.h>
+   * - WgException if name is ill-formed or interface exists.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    */
@@ -127,6 +127,9 @@ public:
    *   and Linux <linux/if.h>;
    * - Must not be empty;
    * - Allowed characters: [a-zA-Z0-9_\-\.].
+   * @throw
+   * - WgException if name is ill-formed or interface exists.
+   * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    */
@@ -242,7 +245,7 @@ public:
    * - Must not be empty;
    * - Allowed characters: [a-zA-Z0-9_\-\.].
    * @throw
-   * - WgException with reason and error code. See <linux/socket.h>
+   * - WgException if name is ill-formed or interface exists.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    * @warning WgInterface::state must be equal to InterfaceState::UNREGISTERED.
@@ -258,7 +261,7 @@ public:
    * - Must not be empty;
    * - Allowed characters: [a-zA-Z0-9_\-\.].
    * @throw
-   * - WgException with reason and error code. See <linux/socket.h>
+   * - WgException if name is ill-formed or interface exists.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    * @warning WgInterface::state must be equal to InterfaceState::UNREGISTERED.
@@ -348,6 +351,7 @@ protected:
    */
   mutable typename ThreadPolicy::Mutex mutex;
 
+private:
   /**
    * @brief Try validate name according to POSIX standart
    * @param name interface string name
@@ -378,7 +382,29 @@ protected:
    * <b>AND</b> failed to apply device's changes to kernel
    */
   void setKey(WgKey<ThreadPolicy> &&key, KeyType type, bool force = false);
+
+  /**
+   * @brief Check whether interface with name exists.
+   * @param name interface name.
+   * @retval true if exists.
+   * @retval false otherwise.
+   */
+  bool interfaceExists(const char name[]) const noexcept;
 };
+
+template <typename TP>
+bool WgInterface<TP>::interfaceExists(const char name[]) const noexcept {
+  const auto sock = socket(AF_INET, SOCK_DGRAM, 0);
+  if (sock < 0)
+    return false;
+
+  struct ifreq ifr{};
+  std::strncpy(ifr.ifr_ifrn.ifrn_name, name, IFNAMSIZ);
+
+  const bool exists = ioctl(sock, SIOCGIFFLAGS, &ifr) == 0;
+  close(sock);
+  return exists;
+}
 
 template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
 
@@ -716,6 +742,9 @@ template <typename TP> void WgInterface<TP>::invalidatePeers() noexcept {
 
 template <typename ThreadPolicy>
 void WgInterface<ThreadPolicy>::setNameAbstr(const char *name) {
+  if (interfaceExists(name))
+    throw WgException(std::string("Interface \"") + name + "\" exists", errno);
+
   if (device && state == UNREGISTERED && tryValidateName(name)) {
     wg_del_device(name);
     if (wg_add_device(name) < 0)
