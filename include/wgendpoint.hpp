@@ -46,12 +46,6 @@ extern "C" {
 template <typename ThreadPolicy = MultiThreaded> class WgEndpoint {
 public:
   /**
-   * @brief Default constructor. Makes WgEndpoint::endpoint as if it contains
-   * "0.0.0.0:51820".
-   */
-  WgEndpoint() noexcept;
-
-  /**
    * @brief Copy constructor. Copies this->endpoint from other.endpoint.
    */
   WgEndpoint(const WgEndpoint &) noexcept = default;
@@ -90,9 +84,20 @@ public:
 
 private:
   /**
-   * @brief Pure struct
+   * @brief Pure struct.
    */
   wg_endpoint endpoint{};
+
+  /**
+   * @brief Mutex to implement thread safety.
+   */
+  mutable typename ThreadPolicy::Mutex mutex;
+
+  /**
+   * @brief Default constructor. Makes WgEndpoint::endpoint as if it contains
+   * "0.0.0.0:51820".
+   */
+  WgEndpoint() noexcept;
 };
 
 template <typename TP> WgEndpoint<TP>::WgEndpoint() noexcept {
@@ -124,6 +129,7 @@ WgEndpoint<TP> WgEndpoint<TP>::create(const std::string &ip, uint16_t port) {
 
 template <typename TP>
 const wg_endpoint &WgEndpoint<TP>::getStruct() const noexcept {
+  typename TP::Lock lock(mutex);
   return endpoint;
 }
 
