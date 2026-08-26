@@ -154,6 +154,7 @@ protected:
 
 template <typename TP>
 const typename WgKey<TP>::elem_t *WgKey<TP>::data() const noexcept {
+  typename TP::Lock lock(mutex);
   return key.data();
 }
 

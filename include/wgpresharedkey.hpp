@@ -110,6 +110,7 @@ WgPresharedKey<TP>::WgPresharedKey(typename WgKey<TP>::key_type key) {
 template <typename TP>
 WgPresharedKey<TP>::WgPresharedKey(WgPresharedKey<TP> &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(this->mutex);
     this->key = other.key;
     other.makeZero();
   }
@@ -119,6 +120,7 @@ template <typename TP>
 WgPresharedKey<TP> &
 WgPresharedKey<TP>::operator=(WgPresharedKey &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(this->mutex);
     this->key = other.key;
     other.makeZero();
   }
@@ -127,6 +129,7 @@ WgPresharedKey<TP>::operator=(WgPresharedKey &&other) noexcept {
 }
 
 template <typename TP> bool WgPresharedKey<TP>::isProper() const noexcept {
+  typename TP::Lock lock(this->mutex);
   return this->isGenerated;
 }
 

@@ -297,6 +297,7 @@ private:
 
 template <typename TP> WgPeer<TP>::WgPeer(WgPeer &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(mutex);
     peer = std::move(other.peer);
     ips = std::move(other.ips);
   }
@@ -304,6 +305,7 @@ template <typename TP> WgPeer<TP>::WgPeer(WgPeer &&other) noexcept {
 
 template <typename TP>
 bool WgPeer<TP>::operator==(const WgPeer &other) const noexcept {
+  typename TP::Lock lock(mutex);
   return peer && other.peer &&
          std::memcmp(peer->public_key, other.peer->public_key, WG_KEY_LEN) == 0;
 }
@@ -356,11 +358,10 @@ template <typename TP> void WgPeer<TP>::disconnectPeer() noexcept {
 }
 
 template <typename TP> void WgPeer<TP>::remove() noexcept {
+  typename TP::Lock lock(mutex);
   if (peer) {
-    disconnectPeer();
-
-    typename TP::Lock lock(mutex);
     peer->flags |= WGPEER_REMOVE_ME;
+    peer->next_peer = nullptr;
   }
 }
 
@@ -424,6 +425,7 @@ template <typename TP> void WgPeer<TP>::addAllowedIP(WgAllowedIP<TP> &&ip) {
 }
 
 template <typename TP> wg_peer *WgPeer<TP>::getStruct() const noexcept {
+  typename TP::Lock lock(mutex);
   return peer.get();
 }
 
@@ -474,6 +476,7 @@ template <typename TP> void WgPeer<TP>::invalidateAllowedIPs() noexcept {
 template <typename TP>
 WgPeer<TP> &WgPeer<TP>::operator=(WgPeer &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(mutex);
     peer = std::move(other.peer);
     ips = std::move(other.ips);
   }

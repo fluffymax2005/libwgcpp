@@ -207,6 +207,7 @@ private:
 template <typename TP>
 WgAllowedIP<TP>::WgAllowedIP(WgAllowedIP &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(mutex);
     this->ip = other.ip;
     other.ip.next_allowedip = nullptr;
   }
@@ -229,6 +230,7 @@ template <typename TP> WgAllowedIP<TP>::WgAllowedIP(const char *cidr) {
 
 template <typename TP>
 bool WgAllowedIP<TP>::operator==(const WgAllowedIP &other) const noexcept {
+  typename TP::Lock lock(mutex);
   if (ip.family != other.ip.family)
     return false;
   if (ip.cidr != other.ip.cidr)
@@ -339,12 +341,14 @@ template <typename TP> void WgAllowedIP<TP>::setCIDR(const char *cidr) {
 }
 
 template <typename TP> Protocol WgAllowedIP<TP>::getProto() const noexcept {
+  typename TP::Lock lock(mutex);
   return static_cast<Protocol>(ip.family);
 }
 
 template <typename TP> std::string WgAllowedIP<TP>::getAddr() const {
   std::string addr;
   char buf[INET6_ADDRSTRLEN];
+  typename TP::Lock lock(mutex);
   if (ip.family == AF_INET) {
     addr = std::string(inet_ntop(AF_INET, &ip.ip4, buf, sizeof(buf)));
   } else {
@@ -355,10 +359,12 @@ template <typename TP> std::string WgAllowedIP<TP>::getAddr() const {
 }
 
 template <typename TP> std::string WgAllowedIP<TP>::getCIDR() const {
+  typename TP::Lock lock(mutex);
   return getAddr() + '/' + std::to_string(ip.cidr);
 }
 
 template <typename TP> uint8_t WgAllowedIP<TP>::getCIDRNumber() const noexcept {
+  typename TP::Lock(mutex);
   return ip.cidr;
 }
 
@@ -383,6 +389,7 @@ template <typename TP> void WgAllowedIP<TP>::disconnect() noexcept {
 template <typename TP>
 WgAllowedIP<TP> &WgAllowedIP<TP>::operator=(WgAllowedIP &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(mutex);
     this->ip = other.ip;
     other.ip.next_allowedip = nullptr;
   }

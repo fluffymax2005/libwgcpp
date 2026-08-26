@@ -127,6 +127,7 @@ WgPublicKey<TP>::WgPublicKey(WgPrivateKey<TP> private_key)
 template <typename TP>
 WgPublicKey<TP>::WgPublicKey(WgPublicKey &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(this->mutex);
     this->key = other.key;
     private_key = std::move(other.private_key);
 
@@ -138,6 +139,7 @@ WgPublicKey<TP>::WgPublicKey(WgPublicKey &&other) noexcept {
 template <typename TP>
 WgPublicKey<TP> &WgPublicKey<TP>::operator=(WgPublicKey &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(this->mutex);
     this->key = other.key;
     private_key = std::move(other.private_key);
 
@@ -149,6 +151,7 @@ WgPublicKey<TP> &WgPublicKey<TP>::operator=(WgPublicKey &&other) noexcept {
 }
 
 template <typename TP> bool WgPublicKey<TP>::isProper() const noexcept {
+  typename TP::Lock lock(this->mutex);
   return this->isGenerated;
 }
 

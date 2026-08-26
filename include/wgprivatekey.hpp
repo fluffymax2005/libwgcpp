@@ -108,6 +108,7 @@ WgPrivateKey<TP>::WgPrivateKey(typename WgKey<TP>::key_type key) {
 template <typename TP>
 WgPrivateKey<TP>::WgPrivateKey(WgPrivateKey<TP> &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(this->mutex);
     this->key = other.key;
     other.makeZero();
   }
@@ -116,6 +117,7 @@ WgPrivateKey<TP>::WgPrivateKey(WgPrivateKey<TP> &&other) noexcept {
 template <typename TP>
 WgPrivateKey<TP> &WgPrivateKey<TP>::operator=(WgPrivateKey &&other) noexcept {
   if (this != &other) {
+    typename TP::Lock lock(this->mutex);
     this->key = other.key;
     other.makeZero();
   }
@@ -124,6 +126,7 @@ WgPrivateKey<TP> &WgPrivateKey<TP>::operator=(WgPrivateKey &&other) noexcept {
 }
 
 template <typename TP> bool WgPrivateKey<TP>::isProper() const noexcept {
+  typename TP::Lock lock(this->mutex);
   return this->isGenerated;
 }
 
