@@ -226,13 +226,13 @@ public:
    * @note Strong exception guarantee: if an exception is thrown,
    *      the object remains in its original state.
    */
-  void setListenPort(uint16_t port) const noexcept;
+  void setListenPort(uint16_t port) noexcept;
 
   /**
    * @brief Set FWMark.
    * @param FWMark
    */
-  void setFWMark(uint32_t mark) const noexcept;
+  void setFWMark(uint32_t mark) noexcept;
 
   /**
    * @brief Register interface with given name. STL version.
@@ -313,10 +313,19 @@ public:
   virtual void release() noexcept;
 
   /**
-   * @brief Get peers public keys.
-   * @return array of string representation of peers' public keys
+   * @brief Get peers for read-only.
+   * @return array of const pointers to peers.
+   * @warning Peers' pointers are not intended to be freed manually.
    */
-  std::vector<std::string> getPeers() const;
+  std::vector<const WgPeer<ThreadPolicy> *> getPeers() const;
+
+  /**
+   * @brief Get peers to modify.
+   * @return array of pointers to peers.
+   * @note In case of read-only use const version instead.
+   * @warning Peers' pointers are not intended to be freed manually.
+   */
+  std::vector<WgPeer<ThreadPolicy> *> getPeers();
 
 protected:
   /**
@@ -429,8 +438,9 @@ bool WgInterface<TP>::hasPeerWithPresharedKey(
 
 template <typename TP>
 WgInterface<TP>::WgInterface(WgInterface &&other) noexcept {
-  typename TP::Lock lock(mutex);
   if (this != &other) {
+    typename TP::Lock lock(mutex);
+
     release();
 
     this->device = std::move(other.device);
@@ -492,7 +502,7 @@ template <typename TP> uint32_t WgInterface<TP>::getFWMark() const noexcept {
 }
 
 template <typename TP>
-void WgInterface<TP>::setListenPort(uint16_t port) const {
+void WgInterface<TP>::setListenPort(uint16_t port) noexcept {
   typename TP::Lock lock(mutex);
   if (device) {
     device->listen_port = port;
@@ -500,8 +510,7 @@ void WgInterface<TP>::setListenPort(uint16_t port) const {
   }
 }
 
-template <typename TP>
-void WgInterface<TP>::setFWMark(uint32_t mark) const noexcept {
+template <typename TP> void WgInterface<TP>::setFWMark(uint32_t mark) noexcept {
   typename TP::Lock lock(mutex);
   if (device) {
     device->fwmark = mark;
@@ -617,30 +626,34 @@ template <typename TP> void WgInterface<TP>::release() noexcept {
 }
 
 template <typename TP>
-std::vector<std::string> WgInterface<TP>::getPeers() const {
+std::vector<const WgPeer<TP> *> WgInterface<TP>::getPeers() const {
   typename TP::Lock lock(mutex);
   if (device == nullptr)
     return {};
 
-  wg_device *dev;
+  std::vector<const WgPeer<TP> *> apeers;
+  apeers.reserve(std::distance(peers.cbegin(), peers.cend()));
 
-  if (wg_get_device(&dev, device->name) < 0)
-    throw WgException("Unable to get interface", errno);
-
-  std::vector<std::string> peers;
-  wg_peer *peer;
-  WgKeyStringType key;
-  wg_for_each_peer(dev, peer) {
-    wg_key_to_base64(key, peer->public_key);
-    try {
-      peers.push_back(key);
-    } catch (const std::bad_alloc &e) {
-      throw WgException(
-          std::string("Unable to get peer's key. Reason: ") + e.what(), ENOMEM);
-    }
+  for (const auto &ppeer : peers) {
+    apeers.push_back(ppeer.get());
   }
-  wg_free_device(dev);
-  return peers;
+
+  return apeers;
+}
+
+template <typename TP> std::vector<WgPeer<TP> *> WgInterface<TP>::getPeers() {
+  typename TP::Lock lock(mutex);
+  if (device == nullptr)
+    return {};
+
+  std::vector<WgPeer<TP> *> apeers;
+  apeers.reserve(std::distance(peers.cbegin(), peers.cend()));
+
+  for (const auto &ppeer : peers) {
+    apeers.push_back(ppeer.get());
+  }
+
+  return apeers;
 }
 
 template <typename TP>
