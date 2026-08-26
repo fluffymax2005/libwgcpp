@@ -72,8 +72,8 @@ public:
     UNREGISTERED, ///< WgInterface::device->name is not registered
                   ///< (wg_device_add) in OS
     POWEREDOFF, ///< WgInterface::device->name is registered (wg_device_add) in
-                ///< OS, but not set (wg_device_set)
-    POWEREDON,  ///< WgInterface is set (wg_device_set)
+                ///< OS, but interface is down
+    POWEREDON,  ///< WgInterface is up
   };
 
   /**
@@ -253,7 +253,7 @@ public:
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    * @warning WgInterface::state must be equal to InterfaceState::UNREGISTERED.
-   * Thus WgInterface::release must be called before this method
+   * Otherwise, an attempt to change the name will throw a WgException.
    */
   void setName(const std::string &name);
 
@@ -270,7 +270,7 @@ public:
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    * @warning WgInterface::state must be equal to InterfaceState::UNREGISTERED.
-   * Thus WgInterface::release must be called before this method
+   * Otherwise, an attempt to change the name will throw a WgException.
    */
   void setName(const char *name);
 
@@ -308,10 +308,7 @@ public:
 
   /**
    * @brief Set interface aka wg_set_device.
-   * @throw
-   * - WgException if setting failed
-   * @note Strong exception guarantee: if an exception is thrown,
-   *      the object remains in its original state.
+   * @throw WgException if setting failed.
    */
   void set();
 
