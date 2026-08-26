@@ -80,7 +80,7 @@ public:
    * @brief Destructor. Releases ownership of resources and deletes interface
    * from OS.
    */
-  virtual ~WgInterface() noexcept;
+  ~WgInterface() noexcept;
 
   /**
    * @brief Copy constructor. Delete because only one interface may own resource
@@ -107,6 +107,11 @@ public:
   WgInterface &operator=(WgInterface &&other) noexcept;
 
   /**
+   * @brief Default constructor. Instantiate empty interface.
+   */
+  WgInterface() = default;
+
+  /**
    * @brief Constructs object with given <TT>name</TT>. STL version.
    * @param name string interface name. Must comply with:<br>
    * - Maximum length: IFNAMSIZ - 1 (15 characters), see IEEE Std 1003.1-2017
@@ -114,7 +119,8 @@ public:
    * - Must not be empty;
    * - Allowed characters: [a-zA-Z0-9_\-\.].
    * @throw
-   * - WgException if name is ill-formed or interface exists.
+   * - WgException if name is ill-formed or interface exists or interface has
+   * been already registered.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    */
@@ -128,7 +134,8 @@ public:
    * - Must not be empty;
    * - Allowed characters: [a-zA-Z0-9_\-\.].
    * @throw
-   * - WgException if name is ill-formed or interface exists.
+   * - WgException if name is ill-formed or interface exists or interface has
+   * been already registered.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
@@ -224,10 +231,6 @@ public:
   /**
    * @brief Set listening port.
    * @param port number
-   * @throw
-   * - std::invalid_argument if <TT>port == 0</TT>
-   * @note Strong exception guarantee: if an exception is thrown,
-   *      the object remains in its original state.
    */
   void setListenPort(uint16_t port) noexcept;
 
@@ -245,13 +248,14 @@ public:
    * - Must not be empty;
    * - Allowed characters: [a-zA-Z0-9_\-\.].
    * @throw
-   * - WgException if name is ill-formed or interface exists.
+   * - WgException if name is ill-formed or interface exists or interface has
+   * been already registered.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    * @warning WgInterface::state must be equal to InterfaceState::UNREGISTERED.
    * Thus WgInterface::release must be called before this method
    */
-  virtual void setName(const std::string &name);
+  void setName(const std::string &name);
 
   /**
    * @brief Register interface with given name. STL version.
@@ -261,13 +265,14 @@ public:
    * - Must not be empty;
    * - Allowed characters: [a-zA-Z0-9_\-\.].
    * @throw
-   * - WgException if name is ill-formed or interface exists.
+   * - WgException if name is ill-formed or interface exists or interface has
+   * been already registered.
    * @see IEEE Std 1003.1-2017, <sys/socket.h>, IFNAMESIZ.
    * @see Linux kernel, <linux/if.h>.
    * @warning WgInterface::state must be equal to InterfaceState::UNREGISTERED.
    * Thus WgInterface::release must be called before this method
    */
-  virtual void setName(const char *name);
+  void setName(const char *name);
 
   /**
    * @brief Set interface private key.
@@ -282,8 +287,8 @@ public:
    * @warning <b>Changing</b> interface's private key if some peer are connected
    * to it might lead to connection loss. Use with caution.
    */
-  virtual void setPrivateKey(WgPrivateKey<ThreadPolicy> &&private_key,
-                             bool force = false);
+  void setPrivateKey(WgPrivateKey<ThreadPolicy> &&private_key,
+                     bool force = false);
 
   /**
    * @brief Add peer into interface
@@ -293,13 +298,13 @@ public:
    * InterfaceState::POWEREDON</TT> <b>AND</b> failed to apply device's changes
    * to kernel
    */
-  virtual void addPeer(WgPeer<ThreadPolicy> &&peer);
+  void addPeer(WgPeer<ThreadPolicy> &&peer);
 
   /**
    * @brief Remove peer by it's public key.
    * @param key peer's public key
    */
-  virtual void removePeer(const WgPublicKey<ThreadPolicy> &key);
+  void removePeer(const WgPublicKey<ThreadPolicy> &key);
 
   /**
    * @brief Set interface aka wg_set_device.
@@ -308,12 +313,12 @@ public:
    * @note Strong exception guarantee: if an exception is thrown,
    *      the object remains in its original state.
    */
-  virtual void set();
+  void set();
 
   /**
    * @brief Release interface resources. Deletes it from kernel as well.
    */
-  virtual void release() noexcept;
+  void release() noexcept;
 
   /**
    * @brief Get peers for read-only.
@@ -330,7 +335,19 @@ public:
    */
   std::vector<WgPeer<ThreadPolicy> *> getPeers();
 
-protected:
+  /**
+   * @brief Bring up interface.
+   * @throw WgException if bringing up failed.
+   */
+  void bringUp();
+
+  /**
+   * @brief Bring down interface.
+   * @throw WgException if bringing down failed.
+   */
+  void bringDown();
+
+private:
   /**
    * @brief Pointer to pure wg_device struct.
    */
@@ -351,7 +368,6 @@ protected:
    */
   mutable typename ThreadPolicy::Mutex mutex;
 
-private:
   /**
    * @brief Try validate name according to POSIX standart
    * @param name interface string name
@@ -366,8 +382,9 @@ private:
   void invalidatePeers() noexcept;
 
   /**
-   * @brief setNameAbstr
+   * @brief setNameAbstr.
    * @param name. See WgInterface::setName for requirements.
+   * @see WgException::setName for exceptions.
    */
   void setNameAbstr(const char *name);
 
@@ -390,6 +407,17 @@ private:
    * @retval false otherwise.
    */
   bool interfaceExists(const char name[]) const noexcept;
+
+  /**
+   * @brief Wrapper function to bring up or down interface.
+   */
+  void bringAbstr(bool up);
+
+  /**
+   * @brief Set interface without mutex.
+   * @see WgInterface::set for exceptions.
+   */
+  void setNoLock();
 };
 
 template <typename TP>
@@ -410,14 +438,10 @@ template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
 
 template <typename TP>
 std::optional<WgPublicKey<TP>> WgInterface<TP>::getPublicKey() const noexcept {
-  {
-    typename TP::Lock lock(mutex);
-    if (device == nullptr)
-      return std::nullopt;
-  }
-  if (!hasPrivateKey())
-    return std::nullopt;
   typename TP::Lock lock(mutex);
+  if (device == nullptr || !(device->flags & WGDEVICE_HAS_PRIVATE_KEY))
+    return std::nullopt;
+
   typename WgKey<TP>::key_type key_data;
   std::memcpy(key_data.data(), device->public_key, sizeof(device->public_key));
   return WgPublicKey<TP>{key_data};
@@ -426,14 +450,10 @@ std::optional<WgPublicKey<TP>> WgInterface<TP>::getPublicKey() const noexcept {
 template <typename TP>
 std::optional<WgPrivateKey<TP>>
 WgInterface<TP>::getPrivateKey() const noexcept {
-  {
-    typename TP::Lock lock(mutex);
-    if (device == nullptr)
-      return std::nullopt;
-  }
-  if (!hasPrivateKey())
-    return std::nullopt;
   typename TP::Lock lock(mutex);
+  if (device == nullptr || !(device->flags & WGDEVICE_HAS_PRIVATE_KEY))
+    return std::nullopt;
+
   typename WgKey<TP>::key_type key_data;
   std::memcpy(key_data.data(), device->private_key,
               sizeof(device->private_key));
@@ -563,27 +583,24 @@ void WgInterface<TP>::setPrivateKey(WgPrivateKey<TP> &&private_key,
 }
 
 template <typename TP> void WgInterface<TP>::addPeer(WgPeer<TP> &&peer) {
-  {
-    typename TP::Lock lock(mutex);
-    if (peer == nullptr)
-      return;
-    peers.push_front(std::make_unique<WgPeer<TP>>(std::move(peer)));
+  typename TP::Lock lock(mutex);
+  peers.push_front(std::make_unique<WgPeer<TP>>(std::move(peer)));
 
-    // Invalidate peers connections
-    invalidatePeers();
-  }
+  // Invalidate peers connections
+  invalidatePeers();
 
   // Apply changes if interface is on
-  if (state == POWEREDON) {
-    set();
+  if (state != UNREGISTERED) {
+    setNoLock();
   }
 }
 
 template <typename TP>
 void WgInterface<TP>::removePeer(const WgPublicKey<TP> &key) {
-  typename TP::Lock lock(mutex);
   if (!key.isProper())
     return;
+
+  typename TP::Lock lock(mutex);
   auto it = std::find_if(peers.begin(), peers.end(),
                          [&key](const std::unique_ptr<WgPeer<TP>> &ptr) {
                            return ptr->hasPublicKey(key);
@@ -597,18 +614,43 @@ void WgInterface<TP>::removePeer(const WgPublicKey<TP> &key) {
       ++prev;
     peers.erase_after(prev);
     invalidatePeers();
+
+    if (state != UNREGISTERED)
+      setNoLock();
   }
 }
 
 template <typename TP> void WgInterface<TP>::set() {
   typename TP::Lock lock(mutex);
+  setNoLock();
+}
+
+template <typename TP> void WgInterface<TP>::setNoLock() {
   if (device == nullptr)
     return;
+
+  if (state == UNREGISTERED)
+    throw WgException("Interface is not registered", EINVAL);
 
   if (wg_set_device(device.get()) < 0)
     throw WgException("Interface \"" + std::string(device->name) +
                           "\" is unable to be set",
                       errno);
+}
+
+template <typename TP> void WgInterface<TP>::bringUp() {
+  typename TP::Lock lock(mutex);
+  bringAbstr(true);
+}
+
+template <typename TP> void WgInterface<TP>::bringDown() {
+  typename TP::Lock lock(mutex);
+  bringAbstr(false);
+}
+
+template <typename TP> void WgInterface<TP>::bringAbstr(bool up) {
+  if (device == nullptr)
+    return;
 
   int sock = socket(AF_INET, SOCK_DGRAM, 0);
   if (sock < 0)
@@ -626,7 +668,10 @@ template <typename TP> void WgInterface<TP>::set() {
         errno);
   }
 
-  ifr.ifr_ifru.ifru_flags |= IFF_UP;
+  if (up)
+    ifr.ifr_ifru.ifru_flags |= IFF_UP;
+  else
+    ifr.ifr_ifru.ifru_flags &= ~IFF_UP;
 
   if (ioctl(sock, SIOCSIFFLAGS, &ifr) != 0) {
     close(sock);
@@ -634,14 +679,21 @@ template <typename TP> void WgInterface<TP>::set() {
                           device->name + '\"',
                       errno);
   }
-
   close(sock);
-  state = POWEREDON;
+
+  if (up)
+    state = POWEREDON;
+  else
+    state = POWEREDOFF;
 }
 
 template <typename TP> void WgInterface<TP>::release() noexcept {
   typename TP::Lock lock(mutex);
   if (device && state != UNREGISTERED) {
+    try {
+      bringAbstr(false);
+    } catch (...) {
+    }
     wg_del_device(device->name);
     state = UNREGISTERED;
 
@@ -742,11 +794,24 @@ template <typename TP> void WgInterface<TP>::invalidatePeers() noexcept {
 
 template <typename ThreadPolicy>
 void WgInterface<ThreadPolicy>::setNameAbstr(const char *name) {
+  if (device && state != UNREGISTERED)
+    throw WgException(std::string("Cannot rename registered interface \"") +
+                          device->name + "\"",
+                      EPERM);
+
   if (interfaceExists(name))
     throw WgException(std::string("Interface \"") + name + "\" exists", errno);
 
-  if (device && state == UNREGISTERED && tryValidateName(name)) {
-    wg_del_device(name);
+  if (!tryValidateName(name))
+    throw WgException(std::string("Invalid interface name \"") + name + "\"",
+                      EINVAL);
+
+  if (device == nullptr) {
+    device = std::make_unique<wg_device>();
+    state = UNREGISTERED;
+  }
+
+  if (state == UNREGISTERED) {
     if (wg_add_device(name) < 0)
       throw WgException("Unable to register interface name", errno);
     std::strcpy(device->name, name);
