@@ -325,7 +325,7 @@ public:
    * @return array of const pointers to peers.
    * @warning Peers' pointers are not intended to be freed manually.
    */
-  std::vector<const WgPeer<ThreadPolicy> *> getPeers() const;
+  std::vector<const std::shared_ptr<WgPeer<ThreadPolicy>>> getPeers() const;
 
   /**
    * @brief Get peers to modify.
@@ -333,7 +333,7 @@ public:
    * @note In case of read-only use const version instead.
    * @warning Peers' pointers are not intended to be freed manually.
    */
-  std::vector<WgPeer<ThreadPolicy> *> getPeers();
+  std::vector<std::shared_ptr<WgPeer<ThreadPolicy>>> getPeers();
 
   /**
    * @brief Bring up interface.
@@ -356,7 +356,7 @@ private:
   /**
    * @brief One-linked list with all peers owned by WgInterface::device.
    */
-  std::forward_list<std::unique_ptr<WgPeer<ThreadPolicy>>> peers;
+  std::forward_list<std::shared_ptr<WgPeer<ThreadPolicy>>> peers;
 
   /**
    * @brief Interface current state.
@@ -584,7 +584,7 @@ void WgInterface<TP>::setPrivateKey(WgPrivateKey<TP> &&private_key,
 
 template <typename TP> void WgInterface<TP>::addPeer(WgPeer<TP> &&peer) {
   typename TP::Lock lock(mutex);
-  peers.push_front(std::make_unique<WgPeer<TP>>(std::move(peer)));
+  peers.push_front(std::make_shared<WgPeer<TP>>(std::move(peer)));
 
   // Invalidate peers connections
   invalidatePeers();
@@ -704,7 +704,8 @@ template <typename TP> void WgInterface<TP>::release() noexcept {
 }
 
 template <typename TP>
-std::vector<const WgPeer<TP> *> WgInterface<TP>::getPeers() const {
+std::vector<const std::shared_ptr<WgPeer<TP>>>
+WgInterface<TP>::getPeers() const {
   typename TP::Lock lock(mutex);
   if (device == nullptr)
     return {};
@@ -713,13 +714,14 @@ std::vector<const WgPeer<TP> *> WgInterface<TP>::getPeers() const {
   apeers.reserve(std::distance(peers.cbegin(), peers.cend()));
 
   for (const auto &ppeer : peers) {
-    apeers.push_back(ppeer.get());
+    apeers.push_back(ppeer);
   }
 
   return apeers;
 }
 
-template <typename TP> std::vector<WgPeer<TP> *> WgInterface<TP>::getPeers() {
+template <typename TP>
+std::vector<std::shared_ptr<WgPeer<TP>>> WgInterface<TP>::getPeers() {
   typename TP::Lock lock(mutex);
   if (device == nullptr)
     return {};
@@ -728,7 +730,7 @@ template <typename TP> std::vector<WgPeer<TP> *> WgInterface<TP>::getPeers() {
   apeers.reserve(std::distance(peers.cbegin(), peers.cend()));
 
   for (const auto &ppeer : peers) {
-    apeers.push_back(ppeer.get());
+    apeers.push_back(ppeer);
   }
 
   return apeers;
