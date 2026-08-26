@@ -439,10 +439,9 @@ bool WgInterface<TP>::hasPeerWithPresharedKey(
 template <typename TP>
 WgInterface<TP>::WgInterface(WgInterface &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(mutex);
-
     release();
 
+    typename TP::Lock lock(mutex);
     this->device = std::move(other.device);
     this->state = other.state;
     other.state = UNREGISTERED;
@@ -498,7 +497,8 @@ template <typename TP> uint16_t WgInterface<TP>::getPort() const noexcept {
 
 template <typename TP> uint32_t WgInterface<TP>::getFWMark() const noexcept {
   typename TP::Lock lock(mutex);
-  return device ? device->fwmark : std::numeric_limits<uint32_t>::max();
+  return device ? device->fwmark
+                : std::numeric_limits<decltype(wg_device::fwmark)>::max();
 }
 
 template <typename TP>
@@ -727,7 +727,6 @@ void WgInterface<ThreadPolicy>::setNameAbstr(const char *name) {
 
 template <typename TP>
 WgInterface<TP> &WgInterface<TP>::operator=(WgInterface &&other) noexcept {
-  typename TP::Lock lock(mutex);
   if (this != &other) {
     release();
 
