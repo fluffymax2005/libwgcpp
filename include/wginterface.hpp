@@ -194,6 +194,13 @@ public:
   bool inline isSet() const noexcept;
 
   /**
+   * @brief Consider whether divice is up.
+   * @retval true if set up
+   * @retval false otherwise.
+   */
+  bool inline isUp() const noexcept;
+
+  /**
    * @brief Get interface's name.
    * @return interface string representation.
    */
@@ -429,6 +436,10 @@ bool WgInterface<TP>::interfaceExists(const char name[]) const noexcept {
   const bool exists = ioctl(sock, SIOCGIFFLAGS, &ifr) == 0;
   close(sock);
   return exists;
+}
+
+template <typename TP> bool WgInterface<TP>::isUp() const noexcept {
+  return state == InterfaceState::POWEREDON;
 }
 
 template <typename TP> WgInterface<TP>::~WgInterface() noexcept { release(); }
