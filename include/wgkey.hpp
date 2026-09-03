@@ -153,7 +153,7 @@ public:
    * @param key Base64 Wireguard key representation
    * @retval true if valid
    * @retval false otherwise
-   * @warning key **must** be valid null terminated string. Otherwise UB is
+   * @warning Key **must** be valid null terminated string. Otherwise UB is
    * reached.
    */
   static bool validateB64StringKey(std::string_view key) noexcept;
