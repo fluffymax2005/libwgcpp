@@ -36,6 +36,7 @@ extern "C" {
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <string_view>
 #include <type_traits>
 
 /**
@@ -134,6 +135,24 @@ public:
    */
   void makeZero() noexcept;
 
+  /**
+   * @brief Validate raw Wireguard key representation.
+   * @param raw_key byte based key representation
+   * @retval true if valid
+   * @retval false otherwise
+   */
+  static bool validateRawKey(const key_type &raw_key) noexcept;
+
+  /**
+   * @brief Validate Base64 string Wireguard key representation.
+   * @param key Base64 Wireguard key representation
+   * @retval true if valid
+   * @retval false otherwise
+   * @warning key **must** be valid null terminated string. Otherwise UB is
+   * reached.
+   */
+  static bool validateB64StringKey(std::string_view key) noexcept;
+
 protected:
   /**
    * @brief Array which contains Wireguard key
@@ -151,6 +170,17 @@ protected:
    */
   mutable typename ThreadPolicy::Mutex mutex;
 };
+
+template <typename TP>
+bool WgKey<TP>::validateRawKey(const key_type &raw_key) noexcept {
+  return !wg_key_is_zero(raw_key.data());
+}
+
+template <typename TP>
+bool WgKey<TP>::validateB64StringKey(std::string_view key) noexcept {
+  key_type raw_key;
+  return wg_key_from_base64(raw_key.data(), key.data()) == 0;
+}
 
 template <typename TP>
 const typename WgKey<TP>::elem_t *WgKey<TP>::data() const noexcept {
