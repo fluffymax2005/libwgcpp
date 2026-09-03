@@ -55,6 +55,14 @@ public:
   WgPresharedKey(typename WgKey<ThreadPolicy>::key_type key);
 
   /**
+   * @brief Constructs object from Base64 string key representation.
+   * @param key Base64 key representation
+   * @throw std::invalid_argument if key is invalid.
+   * @warning For key validation see WgKey::validateB64StringKey.
+   */
+  WgPresharedKey(std::string_view key);
+
+  /**
    * @brief Default copy constructor. Copies <TT>this->key</TT> from
    * <TT>other.key</TT>.
    */
@@ -100,19 +108,32 @@ template <typename TP> WgPresharedKey<TP>::WgPresharedKey() noexcept {
 }
 
 template <typename TP>
+WgPresharedKey<TP>::WgPresharedKey(std::string_view key) {
+  if (wg_key_from_base64(this->key.data(), key.data()))
+    throw std::invalid_argument("Invalid Base64 key provided");
+}
+
+template <typename TP>
 WgPresharedKey<TP>::WgPresharedKey(typename WgKey<TP>::key_type key) {
   if (wg_key_is_zero(key.data()))
     throw std::invalid_argument("Key must not contain only zero bytes");
   std::memcpy(this->key.data(), key.data(), sizeof(key));
-  this->isGenerated = true;
 }
 
 template <typename TP>
 WgPresharedKey<TP>::WgPresharedKey(WgPresharedKey<TP> &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(this->mutex);
-    this->key = other.key;
-    other.makeZero();
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+
+      this->key = other.key;
+      other.makeZero();
+    } else {
+      this->key = other.key;
+      other.makeZero();
+    }
   }
 }
 
@@ -120,9 +141,17 @@ template <typename TP>
 WgPresharedKey<TP> &
 WgPresharedKey<TP>::operator=(WgPresharedKey &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(this->mutex);
-    this->key = other.key;
-    other.makeZero();
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+
+      this->key = other.key;
+      other.makeZero();
+    } else {
+      this->key = other.key;
+      other.makeZero();
+    }
   }
 
   return *this;
@@ -130,13 +159,12 @@ WgPresharedKey<TP>::operator=(WgPresharedKey &&other) noexcept {
 
 template <typename TP> bool WgPresharedKey<TP>::isProper() const noexcept {
   typename TP::Lock lock(this->mutex);
-  return this->isGenerated;
+  return !wg_key_is_zero(this->key.data());
 }
 
 template <typename TP> void WgPresharedKey<TP>::generate() {
   typename TP::Lock lock(this->mutex);
   wg_generate_preshared_key(this->key.data());
-  this->isGenerated = true;
 }
 
 #endif // WGPRESHAREDKEY_H
