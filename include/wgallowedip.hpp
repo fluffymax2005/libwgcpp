@@ -57,32 +57,32 @@ template <typename ThreadPolicy = MultiThreaded> class WgAllowedIP {
 public:
   /**
    * @fn
-   * @brief Default destructor
+   * @brief Default destructor.
    */
   ~WgAllowedIP() = default;
 
   /**
-   * @brief Default copy constructor
+   * @brief Default copy constructor.
    * @param other other instance of WgAllowedIP
    */
   WgAllowedIP(const WgAllowedIP &other) noexcept = default;
 
   /**
-   * @brief Default copy operator=
+   * @brief Default copy operator=.
    * @param other other instance of WgAllowedIP
    */
   WgAllowedIP &operator=(const WgAllowedIP &other) noexcept = default;
 
   /**
-   * @brief Move constructor
+   * @brief Move constructor.
    * @param other other instance of WgAllowedIP
    * @note Copies WgAllowedIP::ip, but sets <TT>other.ip.next_allowedip =
-   * nullptr</TT>
+   * nullptr</TT>.
    */
   WgAllowedIP(WgAllowedIP &&other) noexcept;
 
   /**
-   * @brief Move operator=
+   * @brief Move operator=.
    * @param other other instance of WgAllowedIP
    * @note Sets <TT>other.ip.next_allowedip = nullptr</TT>
    */
@@ -90,12 +90,12 @@ public:
 
   /**
    * @brief Default constructor. Initializes WgAllowedIP::ip as if it contains
-   * "0.0.0.0/0"
+   * "0.0.0.0/0".
    */
   WgAllowedIP() noexcept;
 
   /**
-   * @brief Constructs object using CIDR. STL version
+   * @brief Constructs object using CIDR. STL version.
    * @param cidr CIDR string representation
    * @throws
    * - std::invalid_argument if incorrect IPv4 or IPv6 representation is given
@@ -105,7 +105,7 @@ public:
   explicit WgAllowedIP(const std::string &cidr);
 
   /**
-   * @brief Constructs object using CIDR. C version
+   * @brief Constructs object using CIDR. C version.
    * @param cidr CIDR string representation
    * @throws
    * - std::invalid_argument if incorrect IPv4 or IPv6 representation is given
@@ -115,7 +115,7 @@ public:
   explicit WgAllowedIP(const char *cidr);
 
   /**
-   * @brief operator==
+   * @brief operator==.
    * @param other other instance of WgAllowedIP
    * @return <b>true</b> if this->ip.family == other.ip.family <b>and</b>
    * this->ip.cidr == other.ip.cidr <b>and</b> this->ip.ip4.s_addr ==
@@ -125,7 +125,7 @@ public:
   bool operator==(const WgAllowedIP &other) const noexcept;
 
   /**
-   * @brief Changes CIDR of WgAllowedIP::ip. STL version
+   * @brief Changes CIDR of WgAllowedIP::ip. STL version.
    * @param cidr CIDR string representation
    * @throws
    * - std::invalid_argument if incorrect IPv4 or IPv6 representation is given
@@ -135,7 +135,7 @@ public:
   void setCIDR(const std::string &cidr);
 
   /**
-   * @brief Changes CIDR of WgAllowedIP::ip. C version
+   * @brief Changes CIDR of WgAllowedIP::ip. C version.
    * @param cidr CIDR string representation
    * @throws
    * - std::invalid_argument if incorrect IPv4 or IPv6 representation is given
@@ -145,7 +145,7 @@ public:
   void setCIDR(const char *cidr);
 
   /**
-   * @brief C compability layer to interact with other classes
+   * @brief C compability layer to interact with other classes.
    * @return WgAllowedIP::ip*
    * @warning Should <b>not</b> be modified manually outside of class. Use only
    * to connect with other classes.
@@ -165,7 +165,7 @@ public:
   void disconnect() noexcept;
 
   /**
-   * @brief Casts ip.family to Protocol
+   * @brief Casts ip.family to Protocol.
    * @return static_cast<Protocol>(ip.family)
    */
   inline Protocol getProto() const noexcept;
@@ -187,14 +187,14 @@ public:
   std::string getCIDR() const;
 
   /**
-   * @brief Get CIDR prefix
+   * @brief Get CIDR prefix.
    * @return WgAllowedIP::ip.cidr
    */
   inline uint8_t getCIDRNumber() const noexcept;
 
 private:
   /**
-   * @brief Pure struct. Initialized by default
+   * @brief Pure struct. Initialized by default.
    */
   wg_allowedip ip{};
 
@@ -207,9 +207,17 @@ private:
 template <typename TP>
 WgAllowedIP<TP>::WgAllowedIP(WgAllowedIP &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(mutex);
-    this->ip = other.ip;
-    other.ip.next_allowedip = nullptr;
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+
+      this->ip = other.ip;
+      other.ip.next_allowedip = nullptr;
+    } else {
+      this->ip = other.ip;
+      other.ip.next_allowedip = nullptr;
+    }
   }
 }
 
@@ -389,9 +397,17 @@ template <typename TP> void WgAllowedIP<TP>::disconnect() noexcept {
 template <typename TP>
 WgAllowedIP<TP> &WgAllowedIP<TP>::operator=(WgAllowedIP &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(mutex);
-    this->ip = other.ip;
-    other.ip.next_allowedip = nullptr;
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+
+      this->ip = other.ip;
+      other.ip.next_allowedip = nullptr;
+    } else {
+      this->ip = other.ip;
+      other.ip.next_allowedip = nullptr;
+    }
   }
 
   return *this;

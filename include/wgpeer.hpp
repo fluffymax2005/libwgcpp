@@ -297,9 +297,17 @@ private:
 
 template <typename TP> WgPeer<TP>::WgPeer(WgPeer &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(mutex);
-    peer = std::move(other.peer);
-    ips = std::move(other.ips);
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock2(other.mutex, other.mutex);
+
+      peer = std::move(other.peer);
+      ips = std::move(other.ips);
+    } else {
+      peer = std::move(other.peer);
+      ips = std::move(other.ips);
+    }
   }
 }
 
@@ -476,9 +484,17 @@ template <typename TP> void WgPeer<TP>::invalidateAllowedIPs() noexcept {
 template <typename TP>
 WgPeer<TP> &WgPeer<TP>::operator=(WgPeer &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(mutex);
-    peer = std::move(other.peer);
-    ips = std::move(other.ips);
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock2(other.mutex, other.mutex);
+
+      peer = std::move(other.peer);
+      ips = std::move(other.ips);
+    } else {
+      peer = std::move(other.peer);
+      ips = std::move(other.ips);
+    }
   }
   return *this;
 }

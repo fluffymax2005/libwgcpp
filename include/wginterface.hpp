@@ -495,11 +495,23 @@ WgInterface<TP>::WgInterface(WgInterface &&other) noexcept {
   if (this != &other) {
     release();
 
-    typename TP::Lock lock(mutex);
-    this->device = std::move(other.device);
-    this->state = other.state;
-    other.state = UNREGISTERED;
-    this->peers = std::move(other.peers);
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+
+      this->device = std::move(other.device);
+      this->state = other.state;
+      other.state = UNREGISTERED;
+      this->peers = std::move(other.peers);
+
+    } else {
+
+      this->device = std::move(other.device);
+      this->state = other.state;
+      other.state = UNREGISTERED;
+      this->peers = std::move(other.peers);
+    }
   }
 }
 
@@ -833,11 +845,23 @@ WgInterface<TP> &WgInterface<TP>::operator=(WgInterface &&other) noexcept {
   if (this != &other) {
     release();
 
-    typename TP::Lock lock(mutex);
-    this->device = std::move(other.device);
-    this->state = other.state;
-    other.state = UNREGISTERED;
-    this->peers = std::move(other.peers);
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+
+      this->device = std::move(other.device);
+      this->state = other.state;
+      other.state = UNREGISTERED;
+      this->peers = std::move(other.peers);
+
+    } else {
+
+      this->device = std::move(other.device);
+      this->state = other.state;
+      other.state = UNREGISTERED;
+      this->peers = std::move(other.peers);
+    }
   }
 
   return *this;

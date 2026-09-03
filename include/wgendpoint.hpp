@@ -58,12 +58,12 @@ public:
   /**
    * @brief Move constructor. Copies this->endpoint from other.endpoint.
    */
-  WgEndpoint(WgEndpoint &&) noexcept = default;
+  WgEndpoint(WgEndpoint &&other) noexcept;
 
   /**
    * @brief Move assignment. Copies this->endpoint from other.endpoint.
    */
-  WgEndpoint &operator=(WgEndpoint &&) noexcept = default;
+  WgEndpoint &operator=(WgEndpoint &&other) noexcept;
 
   /**
    * @brief Creates WgEndpoint instance with given ip address and port.
@@ -104,6 +104,37 @@ template <typename TP> WgEndpoint<TP>::WgEndpoint() noexcept {
   // Default Wireguard port + phony ip addr
   endpoint.addr4.sin_family = AF_INET;
   endpoint.addr4.sin_port = htons(51820);
+}
+
+template <typename TP> WgEndpoint<TP>::WgEndpoint(WgEndpoint &&other) noexcept {
+  if (this != &other) {
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+
+      this->endpoint = other.endpoint;
+    } else {
+      this->endpoint = other.endpoint;
+    }
+  }
+}
+
+template <typename TP>
+WgEndpoint<TP> &WgEndpoint<TP>::operator=(WgEndpoint &&other) noexcept {
+  if (this != &other) {
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+
+      this->endpoint = other.endpoint;
+    } else {
+      this->endpoint = other.endpoint;
+    }
+  }
+
+  return *this;
 }
 
 template <typename TP>
