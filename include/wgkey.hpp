@@ -158,6 +158,11 @@ public:
    */
   static bool validateB64StringKey(std::string_view key) noexcept;
 
+  /**
+   * @brief Equals WgKey::isProper.
+   */
+  bool operator==(const WgKey &other) const noexcept;
+
 protected:
   /**
    * @brief Array which contains Wireguard key.
@@ -185,6 +190,11 @@ template <typename TP>
 const typename WgKey<TP>::elem_t *WgKey<TP>::data() const noexcept {
   typename TP::Lock lock(mutex);
   return key.data();
+}
+
+template <typename TP>
+bool WgKey<TP>::operator==(const WgKey &other) const noexcept {
+  return isProper();
 }
 
 template <typename TP> uint32_t WgKey<TP>::size() const noexcept {
