@@ -314,6 +314,42 @@ public:
   void removePeer(const WgPublicKey<ThreadPolicy> &key);
 
   /**
+   * @brief Set peer's endpoint.
+   * @param key peer's public key
+   * @param endpoint endpoint instance to install
+   * @throw WgException if peer does not exist
+   */
+  template <typename EndpointArg,
+            typename = std::enable_if_t<std::is_same_v<
+                std::decay_t<EndpointArg>, WgEndpoint<ThreadPolicy>>>>
+  void setPeerEndpoint(const WgPublicKey<ThreadPolicy> &key,
+                       EndpointArg &&endpoint);
+
+  /**
+   * @brief Add allowed ip for peer.
+   * @param key peer's public key
+   * @param allowed_ip allowed ip instance to install
+   * @throw WgException if peer does not exist
+   */
+  template <typename AllowedIpArg,
+            typename = std::enable_if_t<std::is_same_v<
+                std::decay_t<AllowedIpArg>, WgAllowedIP<ThreadPolicy>>>>
+  void addPeerAllowedIp(const WgPublicKey<ThreadPolicy> &key,
+                        AllowedIpArg &&allowed_ip);
+
+  /**
+   * @brief Remove allowed ip from peer.
+   * @param key peer's public key
+   * @param allowed_ip allowed ip instance to remove
+   * @throw WgException if peer does not exist
+   */
+  template <typename AllowedIpArg,
+            typename = std::enable_if_t<std::is_same_v<
+                std::decay_t<AllowedIpArg>, WgAllowedIP<ThreadPolicy>>>>
+  void removePeerAllowedIp(const WgPublicKey<ThreadPolicy> &key,
+                           AllowedIpArg &&allowed_ip);
+
+  /**
    * @brief Set interface aka wg_set_device.
    * @throw WgException if setting failed.
    */
@@ -323,21 +359,6 @@ public:
    * @brief Release interface resources. Deletes it from kernel as well.
    */
   void release() noexcept;
-
-  /**
-   * @brief Get peers for read-only.
-   * @return array of const pointers to peers.
-   * @warning Peers' pointers are not intended to be freed manually.
-   */
-  std::vector<const std::shared_ptr<WgPeer<ThreadPolicy>>> getPeers() const;
-
-  /**
-   * @brief Get peers to modify.
-   * @return array of pointers to peers.
-   * @note In case of read-only use const version instead.
-   * @warning Peers' pointers are not intended to be freed manually.
-   */
-  std::vector<std::shared_ptr<WgPeer<ThreadPolicy>>> getPeers();
 
   /**
    * @brief Bring up interface.
@@ -423,6 +444,65 @@ private:
    */
   void setNoLock();
 };
+
+template <typename TP>
+template <typename EndpointArg, typename>
+void WgInterface<TP>::setPeerEndpoint(const WgPublicKey<TP> &key,
+                                      EndpointArg &&endpoint) {
+  typename TP::Lock lock(mutex);
+
+  auto it = std::find_if(peers.begin(), peers.end(), [&key](const auto &ptr) {
+    return ptr->hasPublicKey(key);
+  });
+
+  if (it == peers.end())
+    throw WgException("Peer not found", ENOENT);
+
+  it->get()->setEndpoint(std::forward<EndpointArg>(endpoint));
+
+  if (state != UNREGISTERED) {
+    setNoLock();
+  }
+}
+
+template <typename TP>
+template <typename AllowedIpArg, typename>
+void WgInterface<TP>::addPeerAllowedIp(const WgPublicKey<TP> &key,
+                                       AllowedIpArg &&allowed_ip) {
+  typename TP::Lock lock(mutex);
+
+  auto it = std::find_if(peers.begin(), peers.end(), [&key](const auto &ptr) {
+    return ptr->hasPublicKey(key);
+  });
+
+  if (it == peers.end())
+    throw WgException("Peer not found", ENOENT);
+
+  it->get()->addAllowedIP(std::forward<AllowedIpArg>(allowed_ip));
+
+  if (state != UNREGISTERED) {
+    setNoLock();
+  }
+}
+
+template <typename TP>
+template <typename AllowedIpArg, typename>
+void WgInterface<TP>::removePeerAllowedIp(const WgPublicKey<TP> &key,
+                                          AllowedIpArg &&allowed_ip) {
+  typename TP::Lock lock(mutex);
+
+  auto it = std::find_if(peers.begin(), peers.end(), [&key](const auto &ptr) {
+    return ptr->hasPublicKey(key);
+  });
+  if (it == peers.end())
+    throw WgException("Peer not found", ENOENT);
+
+  it->get()->removeAllowedIP(std::forward<AllowedIpArg>(allowed_ip));
+
+  if (state != UNREGISTERED) {
+    setNoLock();
+  }
+}
 
 template <typename TP>
 bool WgInterface<TP>::interfaceExists(const char name[]) const noexcept {
@@ -720,39 +800,6 @@ template <typename TP> void WgInterface<TP>::release() noexcept {
   }
 
   peers.clear();
-}
-
-template <typename TP>
-std::vector<const std::shared_ptr<WgPeer<TP>>>
-WgInterface<TP>::getPeers() const {
-  typename TP::Lock lock(mutex);
-  if (device == nullptr)
-    return {};
-
-  std::vector<const WgPeer<TP> *> apeers;
-  apeers.reserve(std::distance(peers.cbegin(), peers.cend()));
-
-  for (const auto &ppeer : peers) {
-    apeers.push_back(ppeer);
-  }
-
-  return apeers;
-}
-
-template <typename TP>
-std::vector<std::shared_ptr<WgPeer<TP>>> WgInterface<TP>::getPeers() {
-  typename TP::Lock lock(mutex);
-  if (device == nullptr)
-    return {};
-
-  std::vector<WgPeer<TP> *> apeers;
-  apeers.reserve(std::distance(peers.cbegin(), peers.cend()));
-
-  for (const auto &ppeer : peers) {
-    apeers.push_back(ppeer);
-  }
-
-  return apeers;
 }
 
 template <typename TP>
