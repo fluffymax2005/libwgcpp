@@ -100,7 +100,7 @@ public:
   /**
    * @brief Perform generating WgPrivateKey::key
    */
-  virtual void generate() override;
+  virtual void generate() noexcept override;
 };
 
 template <typename TP> WgPrivateKey<TP>::WgPrivateKey() noexcept { generate(); }
@@ -158,7 +158,7 @@ template <typename TP> bool WgPrivateKey<TP>::isProper() const noexcept {
   return !wg_key_is_zero(this->key.data());
 }
 
-template <typename TP> void WgPrivateKey<TP>::generate() {
+template <typename TP> void WgPrivateKey<TP>::generate() noexcept {
   typename TP::Lock lock(this->mutex);
   wg_generate_private_key(this->key.data());
 }

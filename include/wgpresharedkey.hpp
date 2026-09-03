@@ -100,7 +100,7 @@ public:
   /**
    * @brief Perform generating WgPresharedKey::key
    */
-  virtual void generate() override;
+  virtual void generate() noexcept override;
 };
 
 template <typename TP> WgPresharedKey<TP>::WgPresharedKey() noexcept {
@@ -162,7 +162,7 @@ template <typename TP> bool WgPresharedKey<TP>::isProper() const noexcept {
   return !wg_key_is_zero(this->key.data());
 }
 
-template <typename TP> void WgPresharedKey<TP>::generate() {
+template <typename TP> void WgPresharedKey<TP>::generate() noexcept {
   typename TP::Lock lock(this->mutex);
   wg_generate_preshared_key(this->key.data());
 }

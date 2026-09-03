@@ -58,6 +58,14 @@ public:
    */
   WgPublicKey(typename WgKey<ThreadPolicy>::key_type key);
 
+  /**
+   * @brief Constructs object from Base64 string key representation.
+   * @param key Base64 key representation
+   * @throw std::invalid_argument if key is invalid.
+   * @warning For key validation see WgKey::validateB64StringKey.
+   */
+  WgPublicKey(std::string_view key);
+
   /*
    * @brief Default copy constructor. Copies <TT>this->key</TT> from
    * <TT>other.key</TT> and <TT>this->private_key</TT> from
@@ -99,9 +107,11 @@ public:
   virtual bool isProper() const noexcept override;
 
   /**
-   * @brief Perform generating WgPublicKey::key
+   * @brief Perform generating WgPublicKey::key. If <TT>WgPublicKey::isProper ==
+   * false</TT> (for example, instance was moved into another one) then
+   * generating new private key and public key based on it is performed.
    */
-  virtual void generate() override;
+  virtual void generate() noexcept override;
 
 private:
   /**
@@ -115,7 +125,11 @@ WgPublicKey<TP>::WgPublicKey(typename WgKey<TP>::key_type key) {
   if (wg_key_is_zero(key.data()))
     throw std::invalid_argument("Key must not contain only zero bytes");
   std::memcpy(this->key.data(), key.data(), sizeof(key));
-  this->isGenerated = true;
+}
+
+template <typename TP> WgPublicKey<TP>::WgPublicKey(std::string_view key) {
+  if (wg_key_from_base64(this->key.data(), key.data()))
+    throw std::invalid_argument("Invalid Base64 key provided");
 }
 
 template <typename TP>
@@ -127,24 +141,46 @@ WgPublicKey<TP>::WgPublicKey(WgPrivateKey<TP> private_key)
 template <typename TP>
 WgPublicKey<TP>::WgPublicKey(WgPublicKey &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(this->mutex);
-    this->key = other.key;
-    private_key = std::move(other.private_key);
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
 
-    other.makeZero();
-    other.private_key.makeZero();
+      this->key = other.key;
+      private_key = std::move(other.private_key);
+
+      other.makeZero();
+      other.private_key.makeZero();
+    } else {
+      this->key = other.key;
+      private_key = std::move(other.private_key);
+
+      other.makeZero();
+      other.private_key.makeZero();
+    }
   }
 }
 
 template <typename TP>
 WgPublicKey<TP> &WgPublicKey<TP>::operator=(WgPublicKey &&other) noexcept {
   if (this != &other) {
-    typename TP::Lock lock(this->mutex);
-    this->key = other.key;
-    private_key = std::move(other.private_key);
+    if constexpr (std::is_same_v<TP, MultiThreaded>) {
+      std::lock(this->mutex, other.mutex);
+      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
 
-    other.makeZero();
-    other.private_key.makeZero();
+      this->key = other.key;
+      private_key = std::move(other.private_key);
+
+      other.makeZero();
+      other.private_key.makeZero();
+    } else {
+      this->key = other.key;
+      private_key = std::move(other.private_key);
+
+      other.makeZero();
+      other.private_key.makeZero();
+    }
   }
 
   return *this;
@@ -152,15 +188,13 @@ WgPublicKey<TP> &WgPublicKey<TP>::operator=(WgPublicKey &&other) noexcept {
 
 template <typename TP> bool WgPublicKey<TP>::isProper() const noexcept {
   typename TP::Lock lock(this->mutex);
-  return this->isGenerated;
+  return !wg_key_is_zero(this->key.data());
 }
 
-template <typename TP> void WgPublicKey<TP>::generate() {
+template <typename TP> void WgPublicKey<TP>::generate() noexcept {
   typename TP::Lock lock(this->mutex);
-  if (!private_key.isProper())
-    throw std::runtime_error("Private key must be nonzero");
+  private_key.generate();
   wg_generate_public_key(this->key.data(), private_key.data());
-  this->isGenerated = true;
 }
 
 #endif // WGPUBLICKEY_H

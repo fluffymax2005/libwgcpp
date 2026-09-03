@@ -114,7 +114,7 @@ public:
   /**
    * @brief Generate key.
    */
-  virtual void generate() = 0;
+  virtual void generate() noexcept = 0;
 
   /**
    * @brief Get raw const pointer to key content.
