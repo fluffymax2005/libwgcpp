@@ -47,6 +47,11 @@ struct SingleThreaded {
      * @brief Does not unlock anything.
      */
     inline void unlock() {}
+
+    /**
+     * @brief Does not try locking anything.
+     */
+    inline bool try_lock() { return true; }
   };
 
   /**
@@ -61,14 +66,14 @@ struct SingleThreaded {
  */
 struct MultiThreaded {
   /**
-   * @brief Standart std::mutex mutex.
+   * @brief Standard std::mutex mutex.
    */
   using Mutex = std::mutex;
 
   /**
-   * @brief Standart RAII based guard for mutex.
+   * @brief Standard RAII based guard for mutex.
    */
-  using Lock = std::lock_guard<std::mutex>;
+  using Lock = std::lock_guard<Mutex>;
 };
 
 #endif // THREADSAFETY_H
