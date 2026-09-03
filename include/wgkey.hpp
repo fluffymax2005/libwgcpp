@@ -96,6 +96,11 @@ public:
   using key_type = std::array<elem_t, WG_KEY_LEN>;
 
   /**
+   * @brief Base64 Wireguard string key representation
+   */
+  using b64_key_type = wg_key_b64_string;
+
+  /**
    * @brief Default virtual destructor.
    */
   virtual ~WgKey() noexcept = default;
@@ -155,15 +160,9 @@ public:
 
 protected:
   /**
-   * @brief Array which contains Wireguard key
+   * @brief Array which contains Wireguard key.
    */
   std::array<elem_t, WG_KEY_LEN> key{};
-
-  /**
-   * @brief Field which describes if WgKey::key is in valid state
-   * @see WgKey::isProper
-   */
-  bool isGenerated{false};
 
   /**
    * @brief Mutex to implement thread safety.
@@ -202,7 +201,6 @@ WgKey<TP>::cloneData() const noexcept {
 template <typename TP> void WgKey<TP>::makeZero() noexcept {
   typename TP::Lock lock(mutex);
   std::memset(key.data(), 0, WG_KEY_LEN);
-  isGenerated = false;
 }
 
 #endif // WGKEY_H
