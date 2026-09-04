@@ -149,14 +149,14 @@ WgPublicKey<TP>::WgPublicKey(WgPublicKey &&other) noexcept {
       this->key = other.key;
       private_key = std::move(other.private_key);
 
-      other.makeZero();
-      other.private_key.makeZero();
+      other.makeZeroNoMutex();
+      other.private_key.makeZeroNoMutex();
     } else {
       this->key = other.key;
       private_key = std::move(other.private_key);
 
-      other.makeZero();
-      other.private_key.makeZero();
+      other.makeZeroNoMutex();
+      other.private_key.makeZeroNoMutex();
     }
   }
 }
@@ -172,14 +172,14 @@ WgPublicKey<TP> &WgPublicKey<TP>::operator=(WgPublicKey &&other) noexcept {
       this->key = other.key;
       private_key = std::move(other.private_key);
 
-      other.makeZero();
-      other.private_key.makeZero();
+      other.makeZeroNoMutex();
+      other.private_key.makeZeroNoMutex();
     } else {
       this->key = other.key;
       private_key = std::move(other.private_key);
 
-      other.makeZero();
-      other.private_key.makeZero();
+      other.makeZeroNoMutex();
+      other.private_key.makeZeroNoMutex();
     }
   }
 

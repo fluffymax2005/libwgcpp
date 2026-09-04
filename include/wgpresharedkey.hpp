@@ -129,10 +129,10 @@ WgPresharedKey<TP>::WgPresharedKey(WgPresharedKey<TP> &&other) noexcept {
       std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
 
       this->key = other.key;
-      other.makeZero();
+      other.makeZeroNoMutex();
     } else {
       this->key = other.key;
-      other.makeZero();
+      other.makeZeroNoMutex();
     }
   }
 }
@@ -147,10 +147,10 @@ WgPresharedKey<TP>::operator=(WgPresharedKey &&other) noexcept {
       std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
 
       this->key = other.key;
-      other.makeZero();
+      other.makeZeroNoMutex();
     } else {
       this->key = other.key;
-      other.makeZero();
+      other.makeZeroNoMutex();
     }
   }
 

@@ -126,10 +126,10 @@ WgPrivateKey<TP>::WgPrivateKey(WgPrivateKey<TP> &&other) noexcept {
       std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
 
       this->key = other.key;
-      other.makeZero();
+      other.makeZeroNoMutex();
     } else {
       this->key = other.key;
-      other.makeZero();
+      other.makeZeroNoMutex();
     }
   }
 }
@@ -143,10 +143,10 @@ WgPrivateKey<TP> &WgPrivateKey<TP>::operator=(WgPrivateKey &&other) noexcept {
       std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
 
       this->key = other.key;
-      other.makeZero();
+      other.makeZeroNoMutex();
     } else {
       this->key = other.key;
-      other.makeZero();
+      other.makeZeroNoMutex();
     }
   }
 

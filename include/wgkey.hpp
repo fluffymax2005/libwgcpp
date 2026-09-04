@@ -173,6 +173,11 @@ protected:
    * @brief Mutex to implement thread safety.
    */
   mutable typename ThreadPolicy::Mutex mutex;
+
+  /**
+   * @brief No mutex based on WgKey::makeZero
+   */
+  void makeZeroNoMutex() noexcept;
 };
 
 template <typename TP>
@@ -210,6 +215,10 @@ WgKey<TP>::cloneData() const noexcept {
 
 template <typename TP> void WgKey<TP>::makeZero() noexcept {
   typename TP::Lock lock(mutex);
+  std::memset(key.data(), 0, WG_KEY_LEN);
+}
+
+template <typename TP> void WgKey<TP>::makeZeroNoMutex() noexcept {
   std::memset(key.data(), 0, WG_KEY_LEN);
 }
 
