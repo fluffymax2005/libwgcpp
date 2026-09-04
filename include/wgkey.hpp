@@ -141,6 +141,13 @@ public:
   void makeZero() noexcept;
 
   /**
+   * @brief No mutex based on WgKey::makeZero.
+   * @warning Do **not** use as public api function. It is for internal usage
+   * **only**.
+   */
+  void makeZeroNoMutex() noexcept;
+
+  /**
    * @brief Validate raw Wireguard key representation.
    * @param raw_key byte based key representation
    * @retval true if valid
@@ -173,11 +180,6 @@ protected:
    * @brief Mutex to implement thread safety.
    */
   mutable typename ThreadPolicy::Mutex mutex;
-
-  /**
-   * @brief No mutex based on WgKey::makeZero
-   */
-  void makeZeroNoMutex() noexcept;
 };
 
 template <typename TP>
