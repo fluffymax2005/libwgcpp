@@ -46,7 +46,7 @@ public:
    * @param private_key private key
    * @throw WgException if <TT>private_key.isProper == false</TT>.
    */
-  WgPublicKey(WgPrivateKey<ThreadPolicy> private_key);
+  WgPublicKey(const WgPrivateKey<ThreadPolicy> &private_key);
 
   /**
    * @brief Constructs object from raw representation of key.
@@ -133,8 +133,8 @@ template <typename TP> WgPublicKey<TP>::WgPublicKey(std::string_view key) {
 }
 
 template <typename TP>
-WgPublicKey<TP>::WgPublicKey(WgPrivateKey<TP> private_key)
-    : private_key(private_key) {
+WgPublicKey<TP>::WgPublicKey(const WgPrivateKey<TP> &private_key) {
+  this->private_key = WgPrivateKey(private_key.cloneData());
   generate();
 }
 
