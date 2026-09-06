@@ -166,9 +166,22 @@ public:
   static bool validateB64StringKey(std::string_view key) noexcept;
 
   /**
-   * @brief Equals WgKey::isProper.
+   * @brief Compares binary keys' representation. Effictively calls
+   * <TT>std::memcmp(key.data(), other.key.data(), sizeof(key))</TT>
+   * @retval true if <TT>key.data()</TT> and <TT>other.key.data() contains equal
+   * bytes.
+   * @retval false otherwise
    */
   bool operator==(const WgKey &other) const noexcept;
+
+  /**
+   * @brief Compares keys' string representation.
+   * @retval true if both keys contains same characters and lengths are equal
+   * @retval false otherwise
+   * @warning <TT>other</TT> must **be** valid null terminated string. Otherwise
+   * UB is reached.
+   */
+  bool operator==(const std::string_view other) const noexcept;
 
 protected:
   /**
@@ -201,7 +214,17 @@ const typename WgKey<TP>::elem_t *WgKey<TP>::data() const noexcept {
 
 template <typename TP>
 bool WgKey<TP>::operator==(const WgKey &other) const noexcept {
-  return isProper();
+  typename TP::Lock lock(mutex);
+  return std::memcmp(key.data(), other.key.data(), sizeof(key));
+}
+
+template <typename TP>
+bool WgKey<TP>::operator==(std::string_view other) const noexcept {
+  typename TP::Lock lock(mutex);
+  key_type other_raw_key;
+  if (wg_key_from_base64(other_raw_key.data(), other.data()))
+    return false;
+  return std::memcmp(key.data(), other_raw_key.data(), sizeof(key));
 }
 
 template <typename TP> uint32_t WgKey<TP>::size() const noexcept {
