@@ -115,6 +115,22 @@ public:
   explicit WgAllowedIP(const char *cidr);
 
   /**
+   * @brief Validate provided cidr.
+   * @param cidr CIDR string representation to validate
+   * @retval true if valid
+   * @retval false otherwise
+   */
+  static bool validate(const std::string &cidr);
+
+  /**
+   * @brief Validate provided cidr. C version.
+   * @param cidr CIDR string representation to validate
+   * @retval true if valid
+   * @retval false otherwise
+   */
+  static bool validate(const char *cidr) noexcept;
+
+  /**
    * @brief operator==.
    * @param other other instance of WgAllowedIP
    * @return <b>true</b> if this->ip.family == other.ip.family <b>and</b>
@@ -236,6 +252,25 @@ template <typename TP> WgAllowedIP<TP>::WgAllowedIP(const char *cidr) {
   setCIDR(cidr);
 }
 
+template <typename TP> bool WgAllowedIP<TP>::validate(const std::string &cidr) {
+  try {
+    WgAllowedIP inst(cidr);
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
+template <typename TP>
+bool WgAllowedIP<TP>::validate(const char *cidr) noexcept {
+  try {
+    WgAllowedIP inst(cidr);
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
 template <typename TP>
 bool WgAllowedIP<TP>::operator==(const WgAllowedIP &other) const noexcept {
   typename TP::Lock lock(mutex);
@@ -247,7 +282,7 @@ bool WgAllowedIP<TP>::operator==(const WgAllowedIP &other) const noexcept {
   if (ip.family == AF_INET)
     return ip.ip4.s_addr == other.ip.ip4.s_addr;
   else
-    return memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
+    return std::memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
 }
 
 template <typename TP> void WgAllowedIP<TP>::setCIDR(const std::string &cidr) {
