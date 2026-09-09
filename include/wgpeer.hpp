@@ -298,9 +298,7 @@ private:
 template <typename TP> WgPeer<TP>::WgPeer(WgPeer &&other) noexcept {
   if (this != &other) {
     if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::lock(this->mutex, other.mutex);
-      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
-      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+      std::lock_guard lock(other.mutex);
 
       peer = std::move(other.peer);
       ips = std::move(other.ips);
@@ -485,9 +483,7 @@ template <typename TP>
 WgPeer<TP> &WgPeer<TP>::operator=(WgPeer &&other) noexcept {
   if (this != &other) {
     if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::lock(this->mutex, other.mutex);
-      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
-      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+      std::scoped_lock lock(this->mutex, other.mutex);
 
       peer = std::move(other.peer);
       ips = std::move(other.ips);

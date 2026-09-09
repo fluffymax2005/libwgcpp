@@ -142,9 +142,7 @@ template <typename TP>
 WgPublicKey<TP>::WgPublicKey(WgPublicKey &&other) noexcept {
   if (this != &other) {
     if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::lock(this->mutex, other.mutex);
-      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
-      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lock(other.mutex, std::adopt_lock);
 
       this->key = other.key;
       private_key = std::move(other.private_key);
@@ -165,9 +163,7 @@ template <typename TP>
 WgPublicKey<TP> &WgPublicKey<TP>::operator=(WgPublicKey &&other) noexcept {
   if (this != &other) {
     if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::lock(this->mutex, other.mutex);
-      std::lock_guard<std::mutex> lock1(this->mutex, std::adopt_lock);
-      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+      std::scoped_lock lock(this->mutex, other.mutex);
 
       this->key = other.key;
       private_key = std::move(other.private_key);
