@@ -1,47 +1,42 @@
-#include <libwgcpp/wginterface.hpp>
 #include <iostream>
+#include <libwgcpp/wginterface.hpp>
 
 int main() {
 
-    using WgPrivateKey = WgPrivateKey<SingleThreaded>;
-    using WgPublicKey = WgPublicKey<SingleThreaded>;
-    using WgPeer = WgPeer<SingleThreaded>;
-    using WgInterface = WgInterface<SingleThreaded>;
+  using WgPrivateKey = WgPrivateKey<SingleThreaded>;
+  using WgPublicKey = WgPublicKey<SingleThreaded>;
+  using WgPeer = WgPeer<SingleThreaded>;
+  using WgInterface = WgInterface<SingleThreaded>;
 
+  const char *interfaceName = "wg0";
 
-    const char* interfaceName = "wg0";
+  try {
 
-    try {
+    // Create peer
+    WgPeer peer;
 
-        // Create peer
-        WgPeer peer;
+    WgPrivateKey peerPrKey;
+    WgPublicKey peerPbKey(peerPrKey);
+    peer.setPublicKey(std::move(peerPbKey));
 
-        WgPrivateKey peerPrKey;
-        WgPublicKey peerPbKey(peerPrKey);
-        peer.setPublicKey(std::move(peerPbKey));
+    // Create interface
+    WgInterface interface(interfaceName);
+    interface.setListenPort(1234);
+    interface.addPeer(std::move(peer));
 
-        // Create interface
-        WgInterface interface(interfaceName);
-        interface.setListeningPort(1234);
-        interface.addPeer(std::move(peer));
+    interface.setPrivateKey(WgPrivateKey());
 
-        WgPrivateKey interfacePrKey;
+    interface.set();
+    interface.bringUp();
 
-        interface.setPrivateKey(std::move(interfacePrKey));
+    // NOTE: All required information about stored peers must be stored outside
+    // of class. WgInterface does not give possibility to read peers' state in
+    // order to provide thread safety by default.
 
-        interface.set();
+  } catch (const std::exception &e) {
+    std::cerr << e.what() << std::endl;
+    return -1;
+  }
 
-        // Print
-        const auto peers = interface.getPeers();
-        std::cout << "Interface \"" << interfaceName << "\" has "<< peers.size() << " peer(s)" << std::endl;
-        for (const auto& str : peers) {
-            std::cout << "Interface \"" << interfaceName << "\" has peer with public key \"" << str << "\"" << std::endl;
-        }
-
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
-    }
-
-    return 0;
+  return 0;
 }
