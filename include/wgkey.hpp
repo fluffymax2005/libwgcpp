@@ -36,6 +36,7 @@ extern "C" {
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <string_view>
 #include <type_traits>
 
@@ -126,7 +127,7 @@ public:
    * @brief Get Wireguard key size.
    * @return
    */
-  uint32_t size() const noexcept;
+  constexpr uint32_t size() const noexcept;
 
   /**
    * @brief Clone WgKey::key
@@ -164,6 +165,14 @@ public:
    * reached.
    */
   static bool validateB64StringKey(std::string_view key) noexcept;
+
+  /**
+   * @brief Get B64 string key representation.
+   * @retval not empty string key representation if <TT>WgKey::isProper ==
+   * true</TT>
+   * @retval empty string otherwise
+   */
+  std::string toB64String() const;
 
   /**
    * @brief Compares binary keys' representation. Effictively calls
@@ -227,7 +236,7 @@ bool WgKey<TP>::operator==(std::string_view other) const noexcept {
   return std::memcmp(key.data(), other_raw_key.data(), sizeof(key));
 }
 
-template <typename TP> uint32_t WgKey<TP>::size() const noexcept {
+template <typename TP> constexpr uint32_t WgKey<TP>::size() const noexcept {
   return WG_KEY_LEN;
 }
 
@@ -245,6 +254,14 @@ template <typename TP> void WgKey<TP>::makeZero() noexcept {
 
 template <typename TP> void WgKey<TP>::makeZeroNoMutex() noexcept {
   std::memset(key.data(), 0, WG_KEY_LEN);
+}
+
+template <typename TP> std::string WgKey<TP>::toB64String() const {
+  if (!isProper())
+    return "";
+  b64_key_type key_b64;
+  wg_key_to_base64(key_b64, key.data());
+  return std::string(key_b64);
 }
 
 #endif // WGKEY_H
