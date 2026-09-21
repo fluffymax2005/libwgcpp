@@ -1,0 +1,60 @@
+BasedOnStyle: Google
+IndentWidth: 2
+ColumnLimit: 100
+
+---
+Language: Cpp
+AlignAfterOpenBracket: true
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments:
+  Enabled: false
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
+AlignConsecutiveDeclarations:
+  Enabled: false
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+  AlignCaseArrows: true
+  AlignCaseColons: true
+AlignEscapedNewlines: Left
+AlignTrailingComments:
+  Kind: Leave
+AllowBreakBeforeNoexceptSpecifier: Never
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortCompoundRequirementOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: InlineOnly
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+DerivePointerAlignment: false
+BreakBeforeBraces: Attach
+IndentCaseLabels: false
+NamespaceIndentation: None
+SortIncludes:
+  Enabled: true
+  IgnoreCase: true
+IncludeBlocks: Regroup
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: false
+BreakConstructorInitializers: BeforeComma
+AllowShortLambdasOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+UseTab: ForIndentation
+TabWidth: 4
+MaxEmptyLinesToKeep: 4
+FixNamespaceComments: true
+ReflowComments: Never
+SeparateDefinitionBlocks: Always
+EmptyLineBeforeAccessModifier: Always
+IndentPPDirectives: BeforeHash
+AccessModifierOffset: -2

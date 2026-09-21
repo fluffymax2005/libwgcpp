@@ -31,12 +31,13 @@ extern "C" {
 #include "wireguard.h"
 }
 
-#include "threadsafety.hpp"
-
 #include <arpa/inet.h>
 #include <netinet/in.h>
+
 #include <stdexcept>
 #include <string>
+
+#include "threadsafety.hpp"
 
 /**
  * @class WgEndpoint
@@ -45,27 +46,28 @@ extern "C" {
  * default.
  * @note Currently supports **only** IPv4.
  */
-template <typename ThreadPolicy = MultiThreaded> class WgEndpoint {
+template<typename ThreadPolicy = MultiThreaded>
+class WgEndpoint {
 public:
   /**
    * @brief Copy constructor. Copies this->endpoint from other.endpoint.
    */
-  WgEndpoint(const WgEndpoint &) noexcept = default;
+  WgEndpoint(const WgEndpoint&) noexcept = default;
 
   /**
    * @brief Copy assignment. Copies this->endpoint from other.endpoint.
    */
-  WgEndpoint &operator=(const WgEndpoint &) noexcept = default;
+  WgEndpoint& operator=(const WgEndpoint&) noexcept = default;
 
   /**
    * @brief Move constructor. Copies this->endpoint from other.endpoint.
    */
-  WgEndpoint(WgEndpoint &&other) noexcept;
+  WgEndpoint(WgEndpoint&& other) noexcept;
 
   /**
    * @brief Move assignment. Copies this->endpoint from other.endpoint.
    */
-  WgEndpoint &operator=(WgEndpoint &&other) noexcept;
+  WgEndpoint& operator=(WgEndpoint&& other) noexcept;
 
   /**
    * @brief Creates WgEndpoint instance with given ip address and port.
@@ -76,7 +78,7 @@ public:
    * - std::invalid_argument if invalid ip address <b>OR</b> port number
    * provided
    */
-  static WgEndpoint create(const std::string &ip, uint16_t port);
+  static WgEndpoint create(const std::string& ip, uint16_t port);
 
   /**
    * @brief Validate Endpoint string representation.
@@ -84,13 +86,13 @@ public:
    * @retval true if valid
    * @retval false otherwise
    */
-  static bool validate(const std::string &endpoint);
+  static bool validate(const std::string& endpoint);
 
   /**
    * @brief Get endpoint pure wg_endpoint struct to directly read data
    * @return WgEndpoint::endpoint
    */
-  const wg_endpoint &getStruct() const noexcept;
+  const wg_endpoint& getStruct() const noexcept;
 
 private:
   /**
@@ -110,88 +112,89 @@ private:
   WgEndpoint() noexcept;
 };
 
-template <typename TP>
-bool WgEndpoint<TP>::validate(const std::string &endpoint) {
+template<typename TP>
+bool WgEndpoint<TP>::validate(const std::string& endpoint) {
   const auto colon_pos = endpoint.find(':');
   if (colon_pos == std::string::npos || colon_pos != endpoint.find_last_of(':'))
-    return false;
+	return false;
 
   std::string_view addr_sv = std::string_view(endpoint).substr(0, colon_pos);
   if (addr_sv.empty() || addr_sv.size() >= INET_ADDRSTRLEN)
-    return false;
+	return false;
 
   in_addr bin_addr;
   if (inet_pton(AF_INET, std::string(addr_sv).c_str(), &bin_addr) != 1)
-    return false;
+	return false;
 
   int port;
   try {
-    port = std::stoi(endpoint.substr(colon_pos + 1));
+	port = std::stoi(endpoint.substr(colon_pos + 1));
   } catch (...) {
-    return false;
+	return false;
   }
 
   if (port < 0 || port > std::numeric_limits<in_port_t>::max())
-    return false;
+	return false;
   return true;
 }
 
-template <typename TP> WgEndpoint<TP>::WgEndpoint() noexcept {
+template<typename TP>
+WgEndpoint<TP>::WgEndpoint() noexcept {
   // Default Wireguard port + phony ip addr
   endpoint.addr4.sin_family = AF_INET;
   endpoint.addr4.sin_port = htons(51820);
 }
 
-template <typename TP> WgEndpoint<TP>::WgEndpoint(WgEndpoint &&other) noexcept {
+template<typename TP>
+WgEndpoint<TP>::WgEndpoint(WgEndpoint&& other) noexcept {
   if (this != &other) {
-    if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::lock_guard<std::mutex> lock(other.mutex, std::adopt_lock);
+	if constexpr (std::is_same_v<TP, MultiThreaded>) {
+	  std::lock_guard<std::mutex> lock(other.mutex, std::adopt_lock);
 
-      this->endpoint = other.endpoint;
-    } else {
-      this->endpoint = other.endpoint;
-    }
+	  this->endpoint = other.endpoint;
+	} else {
+	  this->endpoint = other.endpoint;
+	}
   }
 }
 
-template <typename TP>
-WgEndpoint<TP> &WgEndpoint<TP>::operator=(WgEndpoint &&other) noexcept {
+template<typename TP>
+WgEndpoint<TP>& WgEndpoint<TP>::operator=(WgEndpoint&& other) noexcept {
   if (this != &other) {
-    if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::scoped_lock lock(this->mutex, other.mutex);
+	if constexpr (std::is_same_v<TP, MultiThreaded>) {
+	  std::scoped_lock lock(this->mutex, other.mutex);
 
-      this->endpoint = other.endpoint;
-    } else {
-      this->endpoint = other.endpoint;
-    }
+	  this->endpoint = other.endpoint;
+	} else {
+	  this->endpoint = other.endpoint;
+	}
   }
 
   return *this;
 }
 
-template <typename TP>
-WgEndpoint<TP> WgEndpoint<TP>::create(const std::string &ip, uint16_t port) {
+template<typename TP>
+WgEndpoint<TP> WgEndpoint<TP>::create(const std::string& ip, uint16_t port) {
   WgEndpoint ep;
 
   if (port == 0)
-    throw std::invalid_argument("Port number must be nonzero");
+	throw std::invalid_argument("Port number must be nonzero");
 
   if (inet_pton(AF_INET, ip.c_str(), &ep.endpoint.addr4.sin_addr) == 1) {
-    ep.endpoint.addr4.sin_family = AF_INET;
-    ep.endpoint.addr4.sin_port = htons(port);
-  } else if (inet_pton(AF_INET6, ip.c_str(), &ep.endpoint.addr6.sin6_addr) ==
-             1) {
-    ep.endpoint.addr6.sin6_family = AF_INET6;
-    ep.endpoint.addr6.sin6_port = htons(port);
+	ep.endpoint.addr4.sin_family = AF_INET;
+	ep.endpoint.addr4.sin_port = htons(port);
+  } else if (inet_pton(AF_INET6, ip.c_str(), &ep.endpoint.addr6.sin6_addr) == 1) {
+	ep.endpoint.addr6.sin6_family = AF_INET6;
+	ep.endpoint.addr6.sin6_port = htons(port);
   } else {
-    throw std::invalid_argument("Invalid IP: " + ip);
+	throw std::invalid_argument("Invalid IP: " + ip);
   }
 
   return ep;
 }
 
-template <typename TP>
-const wg_endpoint &WgEndpoint<TP>::getStruct() const noexcept {
+template<typename TP>
+const wg_endpoint& WgEndpoint<TP>::getStruct() const noexcept {
   typename TP::Lock lock(mutex);
   return endpoint;
 }

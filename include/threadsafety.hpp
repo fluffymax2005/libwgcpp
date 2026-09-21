@@ -38,20 +38,20 @@ struct SingleThreaded {
    * @brief Phony mutex struct. Methods does nothing.
    */
   struct Mutex {
-    /**
+	/**
      * @brief Does not lock anything.
      */
-    inline void lock() {}
+	inline void lock() {}
 
-    /**
+	/**
      * @brief Does not unlock anything.
      */
-    inline void unlock() {}
+	inline void unlock() {}
 
-    /**
+	/**
      * @brief Does not try locking anything.
      */
-    inline bool try_lock() { return true; }
+	inline bool try_lock() { return true; }
   };
 
   /**

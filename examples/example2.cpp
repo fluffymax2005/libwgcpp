@@ -1,7 +1,6 @@
+#include <iostream>
 #include <libwgcpp/wgendpoint.hpp>
 #include <libwgcpp/wginterface.hpp>
-
-#include <iostream>
 #include <thread>
 
 int main() {
@@ -13,38 +12,37 @@ int main() {
   using WgPeer = WgPeer<SingleThreaded>;
   using WgInterface = WgInterface<SingleThreaded>;
 
-  const char *interfaceName = "wg10";
+  const char* interfaceName = "wg10";
 
   try {
+	// Configure client's peer - server
+	WgPresharedKey prsKey;
+	WgPublicKey pbKey{WgPrivateKey()};
 
-    // Configure client's peer - server
-    WgPresharedKey prsKey;
-    WgPublicKey pbKey{WgPrivateKey()};
+	WgPeer peer(&pbKey, &prsKey);
+	peer.addAllowedIP(WgAllowedIP("192.168.1.0/24"));
+	peer.setEndpoint(WgEndpoint::create("123.123.123.123", 51820));
+	peer.setPersistentKeepAlive(25);
 
-    WgPeer peer(&pbKey, &prsKey);
-    peer.addAllowedIP(WgAllowedIP("192.168.1.0/24"));
-    peer.setEndpoint(WgEndpoint::create("123.123.123.123", 51820));
-    peer.setPersistentKeepAlive(25);
+	// Configure client interface
+	WgInterface interface{interfaceName};
+	interface.setPrivateKey(WgPrivateKey());
+	interface.setListenPort(51820);
+	interface.addPeer(std::move(peer));
+	interface.set();
 
-    // Configure client interface
-    WgInterface interface{interfaceName};
-    interface.setPrivateKey(WgPrivateKey());
-    interface.setListenPort(51820);
-    interface.addPeer(std::move(peer));
-    interface.set();
+	std::cout << '\"' << interface.getName() << "\" listens on port " << interface.getPort()
+	          << '\n';
+	std::cout << '\"' << interface.getName() << "\" has fwmark = " << interface.getFWMark()
+	          << std::endl;
 
-    std::cout << '\"' << interface.getName() << "\" listens on port "
-              << interface.getPort() << '\n';
-    std::cout << '\"' << interface.getName()
-              << "\" has fwmark = " << interface.getFWMark() << std::endl;
+	// Sleep some time so user could investigate interface appearance
+	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(10s);
 
-    // Sleep some time so user could investigate interface appearance
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(10s);
-
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << std::endl;
-    return -1;
+  } catch (const std::exception& e) {
+	std::cerr << e.what() << std::endl;
+	return -1;
   }
 
   return 0;

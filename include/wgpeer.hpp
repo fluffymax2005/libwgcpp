@@ -26,17 +26,17 @@ extern "C" {
 #include "wireguard.h"
 }
 
-#include "threadsafety.hpp"
-#include "wgallowedip.hpp"
-#include "wgendpoint.hpp"
-#include "wgpresharedkey.hpp"
-#include "wgpublickey.hpp"
-
 #include <algorithm>
 #include <cstring>
 #include <forward_list>
 #include <memory>
 #include <stdexcept>
+
+#include "threadsafety.hpp"
+#include "wgallowedip.hpp"
+#include "wgendpoint.hpp"
+#include "wgpresharedkey.hpp"
+#include "wgpublickey.hpp"
 
 /**
  * @brief operator| for wg_peer_flags type
@@ -44,8 +44,7 @@ extern "C" {
  * @param b right side flag mask
  * @return result of bitwise or a and b
  */
-inline enum wg_peer_flags operator|(enum wg_peer_flags a,
-                                    enum wg_peer_flags b) {
+inline enum wg_peer_flags operator|(enum wg_peer_flags a, enum wg_peer_flags b) {
   return static_cast<wg_peer_flags>(static_cast<int>(a) | static_cast<int>(b));
 }
 
@@ -55,8 +54,7 @@ inline enum wg_peer_flags operator|(enum wg_peer_flags a,
  * @param b right side flag mask
  * @return reference to a which is result of bitwise or a and b
  */
-inline enum wg_peer_flags &operator|=(enum wg_peer_flags &a,
-                                      enum wg_peer_flags b) {
+inline enum wg_peer_flags& operator|=(enum wg_peer_flags& a, enum wg_peer_flags b) {
   a = a | b;
   return a;
 }
@@ -67,8 +65,7 @@ inline enum wg_peer_flags &operator|=(enum wg_peer_flags &a,
  * @param b right side flag mask
  * @return result of bitwise and a and b
  */
-inline enum wg_peer_flags operator&(enum wg_peer_flags a,
-                                    enum wg_peer_flags b) {
+inline enum wg_peer_flags operator&(enum wg_peer_flags a, enum wg_peer_flags b) {
   return static_cast<wg_peer_flags>(static_cast<int>(a) & static_cast<int>(b));
 }
 
@@ -78,8 +75,7 @@ inline enum wg_peer_flags operator&(enum wg_peer_flags a,
  * @param b right side flag mask
  * @return reference to a which is result of bitwise and a and b
  */
-inline enum wg_peer_flags &operator&=(enum wg_peer_flags &a,
-                                      enum wg_peer_flags b) {
+inline enum wg_peer_flags& operator&=(enum wg_peer_flags& a, enum wg_peer_flags b) {
   a = a & b;
   return a;
 }
@@ -100,7 +96,8 @@ inline enum wg_peer_flags operator!(enum wg_peer_flags a) {
  * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by
  * default.
  */
-template <typename ThreadPolicy = MultiThreaded> class WgPeer {
+template<typename ThreadPolicy = MultiThreaded>
+class WgPeer {
 public:
   /**
    * @brief Default destructor
@@ -111,27 +108,27 @@ public:
    * @brief Copy constructor is deleted. Only one WgPeer may own only one
    * wg_peer and WgAllowedIPs.
    */
-  WgPeer(const WgPeer &) noexcept = delete;
+  WgPeer(const WgPeer&) noexcept = delete;
 
   /**
    * @brief Copy assignment is deleted. Only one WgPeer may own only one wg_peer
    * and WgAllowedIPs.
    */
-  WgPeer &operator=(const WgPeer &) noexcept = delete;
+  WgPeer& operator=(const WgPeer&) noexcept = delete;
 
   /**
    * @brief Move constructor. Move ownership of WgPeer::peer nad WgPeer::ips
    * from <TT>other</TT> to <TT>this</TT>.
    * @param other other instance
    */
-  WgPeer(WgPeer &&other) noexcept;
+  WgPeer(WgPeer&& other) noexcept;
 
   /**
    * @brief Move assignment. Move ownership of WgPeer::peer nad WgPeer::ips
    * <TT>other</TT> to <TT>this</TT>.
    * @param other other instance
    */
-  WgPeer &operator=(WgPeer &&other) noexcept;
+  WgPeer& operator=(WgPeer&& other) noexcept;
 
   /**
    * @brief Compare to two obects.
@@ -141,7 +138,7 @@ public:
    * - <TT>peer.public_key equals other.public_key</TT>
    * @retval false otherwise
    */
-  bool operator==(const WgPeer &other) const noexcept;
+  bool operator==(const WgPeer& other) const noexcept;
 
   /**
    * @brief Constructor. Makes instance based of public key and preshared key
@@ -154,8 +151,8 @@ public:
    * @note If nullptr provided instead of valid pointer contructor does not in
    * relation to approriate key.
    */
-  WgPeer(WgPublicKey<ThreadPolicy> *public_key,
-         WgPresharedKey<ThreadPolicy> *preshared_key = nullptr);
+  WgPeer(WgPublicKey<ThreadPolicy>* public_key,
+         WgPresharedKey<ThreadPolicy>* preshared_key = nullptr);
 
   /**
    * @brief Default contructor.
@@ -168,7 +165,7 @@ public:
    * @param key public key
    * @throw WgException if <TT>public_key->isProper == false</TT>.
    */
-  void setPublicKey(WgPublicKey<ThreadPolicy> &&key);
+  void setPublicKey(WgPublicKey<ThreadPolicy>&& key);
 
   /**
    * @brief Set preshared key. Implies that key may be contained only by one
@@ -176,19 +173,19 @@ public:
    * @param key preshared key
    * @throw WgException if <TT>preshared_key->isProper == false</TT>.
    */
-  void setPresharedKey(WgPresharedKey<ThreadPolicy> &&key);
+  void setPresharedKey(WgPresharedKey<ThreadPolicy>&& key);
 
   /**
    * @brief Set peer's endpoint
    * @param endpoint instance of endpoint
    */
-  void setEndpoint(const WgEndpoint<ThreadPolicy> &endpoint) noexcept;
+  void setEndpoint(const WgEndpoint<ThreadPolicy>& endpoint) noexcept;
 
   /**
    * @brief Connect other peer with current one. C compability layer.
    * @param other
    */
-  void connectPeer(wg_peer *other) noexcept;
+  void connectPeer(wg_peer* other) noexcept;
 
   /**
    * @brief Disconnect this peer from other one. Effectively calls
@@ -216,7 +213,7 @@ public:
    * - <TT>peer->public_key equals key.data().
    * @retval false otherwise.
    */
-  bool hasPublicKey(const WgPublicKey<ThreadPolicy> &key) const noexcept;
+  bool hasPublicKey(const WgPublicKey<ThreadPolicy>& key) const noexcept;
 
   /**
    * @brief Consider that peer contains preshared key.
@@ -226,7 +223,7 @@ public:
    * - <TT>peer->preshared_key equals key.data().
    * @retval false otherwise.
    */
-  bool hasPresharedKey(const WgPresharedKey<ThreadPolicy> &key) const noexcept;
+  bool hasPresharedKey(const WgPresharedKey<ThreadPolicy>& key) const noexcept;
 
   /**
    * @brief Add AllowedIP.
@@ -236,7 +233,7 @@ public:
    * @note Strong exception guarantee: if an exception is thrown,
    *      the object remains in its original state.
    */
-  void addAllowedIP(const WgAllowedIP<ThreadPolicy> &ip);
+  void addAllowedIP(const WgAllowedIP<ThreadPolicy>& ip);
 
   /**
    * @brief Add AllowedIP.
@@ -246,14 +243,14 @@ public:
    * @note Strong exception guarantee: if an exception is thrown,
    *      the object remains in its original state.
    */
-  void addAllowedIP(WgAllowedIP<ThreadPolicy> &&ip);
+  void addAllowedIP(WgAllowedIP<ThreadPolicy>&& ip);
 
   /**
    * @brief Remove allowed ip provided by cidr
    * @param cidr CIDR string representation
    * @note If CIDR is invalid method does nothing
    */
-  void removeAllowedIP(const std::string &cidr) noexcept;
+  void removeAllowedIP(const std::string& cidr) noexcept;
 
   /**
    * @brief Get WgPeer::peer raw pointer. C compability layer to interact with
@@ -262,7 +259,7 @@ public:
    * @warning Should <b>not</b> be modified manually outside of class. Use only
    * to connect with other classes.
    */
-  wg_peer *getStruct() const noexcept;
+  wg_peer* getStruct() const noexcept;
 
 private:
   /**
@@ -287,7 +284,7 @@ private:
    * @throw WgException if <TT>key.isProper == false</TT>
    * @note Ignore WgPrivateKey.
    */
-  void setKey(WgKey<ThreadPolicy> &&key, KeyType type) const;
+  void setKey(WgKey<ThreadPolicy>&& key, KeyType type) const;
 
   /**
    * @brief Invalidates connections of allowed ips after modification
@@ -295,202 +292,208 @@ private:
   void invalidateAllowedIPs() noexcept;
 };
 
-template <typename TP> WgPeer<TP>::WgPeer(WgPeer &&other) noexcept {
+template<typename TP>
+WgPeer<TP>::WgPeer(WgPeer&& other) noexcept {
   if (this != &other) {
-    if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::lock_guard lock(other.mutex);
+	if constexpr (std::is_same_v<TP, MultiThreaded>) {
+	  std::lock_guard lock(other.mutex);
 
-      peer = std::move(other.peer);
-      ips = std::move(other.ips);
-    } else {
-      peer = std::move(other.peer);
-      ips = std::move(other.ips);
-    }
+	  peer = std::move(other.peer);
+	  ips = std::move(other.ips);
+	} else {
+	  peer = std::move(other.peer);
+	  ips = std::move(other.ips);
+	}
   }
 }
 
-template <typename TP>
-bool WgPeer<TP>::operator==(const WgPeer &other) const noexcept {
+template<typename TP>
+bool WgPeer<TP>::operator==(const WgPeer& other) const noexcept {
   typename TP::Lock lock(mutex);
   return peer && other.peer &&
          std::memcmp(peer->public_key, other.peer->public_key, WG_KEY_LEN) == 0;
 }
 
-template <typename TP>
-WgPeer<TP>::WgPeer() : peer{std::make_unique<wg_peer>()} {}
-
-template <typename TP>
-WgPeer<TP>::WgPeer(WgPublicKey<TP> *public_key,
-                   WgPresharedKey<TP> *preshared_key) {
-  peer = std::make_unique<wg_peer>();
-  if (public_key)
-    setKey(std::move(*public_key), KeyType::PUBLIC);
-  if (preshared_key)
-    setKey(std::move(*preshared_key), KeyType::PRESHARED);
+template<typename TP>
+WgPeer<TP>::WgPeer() : peer{std::make_unique<wg_peer>()} {
 }
 
-template <typename TP> void WgPeer<TP>::setPublicKey(WgPublicKey<TP> &&key) {
+template<typename TP>
+WgPeer<TP>::WgPeer(WgPublicKey<TP>* public_key, WgPresharedKey<TP>* preshared_key) {
+  peer = std::make_unique<wg_peer>();
+  if (public_key)
+	setKey(std::move(*public_key), KeyType::PUBLIC);
+  if (preshared_key)
+	setKey(std::move(*preshared_key), KeyType::PRESHARED);
+}
+
+template<typename TP>
+void WgPeer<TP>::setPublicKey(WgPublicKey<TP>&& key) {
   typename TP::Lock lock(mutex);
   setKey(std::move(key), KeyType::PUBLIC);
 }
 
-template <typename TP>
-void WgPeer<TP>::setPresharedKey(WgPresharedKey<TP> &&key) {
+template<typename TP>
+void WgPeer<TP>::setPresharedKey(WgPresharedKey<TP>&& key) {
   typename TP::Lock lock(mutex);
   setKey(std::move(key), KeyType::PRESHARED);
 }
 
-template <typename TP>
-void WgPeer<TP>::setEndpoint(const WgEndpoint<TP> &endpoint) noexcept {
+template<typename TP>
+void WgPeer<TP>::setEndpoint(const WgEndpoint<TP>& endpoint) noexcept {
   typename TP::Lock lock(mutex);
   if (peer == nullptr)
-    return;
+	return;
   peer->endpoint = endpoint.getStruct();
 }
 
-template <typename TP> void WgPeer<TP>::connectPeer(wg_peer *other) noexcept {
+template<typename TP>
+void WgPeer<TP>::connectPeer(wg_peer* other) noexcept {
   typename TP::Lock lock(mutex);
   if (peer == nullptr || other == nullptr)
-    return;
+	return;
   peer->next_peer = other;
 }
 
-template <typename TP> void WgPeer<TP>::disconnectPeer() noexcept {
+template<typename TP>
+void WgPeer<TP>::disconnectPeer() noexcept {
   typename TP::Lock lock(mutex);
   if (peer == nullptr)
-    return;
+	return;
 
   peer->next_peer = nullptr;
 }
 
-template <typename TP> void WgPeer<TP>::remove() noexcept {
+template<typename TP>
+void WgPeer<TP>::remove() noexcept {
   typename TP::Lock lock(mutex);
   if (peer) {
-    peer->flags |= WGPEER_REMOVE_ME;
-    peer->next_peer = nullptr;
+	peer->flags |= WGPEER_REMOVE_ME;
+	peer->next_peer = nullptr;
   }
 }
 
-template <typename TP>
+template<typename TP>
 void WgPeer<TP>::setPersistentKeepAlive(uint16_t time) const noexcept {
   typename TP::Lock lock(mutex);
   if (peer == nullptr)
-    return;
+	return;
 
   peer->persistent_keepalive_interval = time;
   peer->flags |= WGPEER_HAS_PERSISTENT_KEEPALIVE_INTERVAL;
 }
 
-template <typename TP>
-bool WgPeer<TP>::hasPublicKey(const WgPublicKey<TP> &key) const noexcept {
+template<typename TP>
+bool WgPeer<TP>::hasPublicKey(const WgPublicKey<TP>& key) const noexcept {
   typename TP::Lock lock(mutex);
   if (peer == nullptr)
-    return false;
+	return false;
 
   return std::memcmp(peer->public_key, key.data(), WG_KEY_LEN) == 0;
 }
 
-template <typename TP>
-bool WgPeer<TP>::hasPresharedKey(const WgPresharedKey<TP> &key) const noexcept {
+template<typename TP>
+bool WgPeer<TP>::hasPresharedKey(const WgPresharedKey<TP>& key) const noexcept {
   typename TP::Lock lock(mutex);
   if (peer == nullptr)
-    return false;
+	return false;
 
   return std::memcmp(peer->preshared_key, key.data(), WG_KEY_LEN) == 0;
 }
 
-template <typename TP>
-void WgPeer<TP>::removeAllowedIP(const std::string &cidr) noexcept {
+template<typename TP>
+void WgPeer<TP>::removeAllowedIP(const std::string& cidr) noexcept {
   typename TP::Lock lock(mutex);
-  ips.remove_if([&cidr](const std::unique_ptr<WgAllowedIP<TP>> &ptr) {
-    return ptr->getCIDR() == cidr;
-  });
+  ips.remove_if(
+      [&cidr](const std::unique_ptr<WgAllowedIP<TP>>& ptr) { return ptr->getCIDR() == cidr; });
 
   invalidateAllowedIPs();
 }
 
-template <typename TP>
-void WgPeer<TP>::addAllowedIP(const WgAllowedIP<TP> &ip) {
+template<typename TP>
+void WgPeer<TP>::addAllowedIP(const WgAllowedIP<TP>& ip) {
   typename TP::Lock lock(mutex);
   if (peer == nullptr)
-    return;
+	return;
 
   ips.push_front(std::make_unique<WgAllowedIP<TP>>(ip));
 
   invalidateAllowedIPs();
 }
 
-template <typename TP> void WgPeer<TP>::addAllowedIP(WgAllowedIP<TP> &&ip) {
+template<typename TP>
+void WgPeer<TP>::addAllowedIP(WgAllowedIP<TP>&& ip) {
   typename TP::Lock lock(mutex);
   if (peer == nullptr)
-    return;
+	return;
 
   ips.push_front(std::make_unique<WgAllowedIP<TP>>(std::move(ip)));
 
   invalidateAllowedIPs();
 }
 
-template <typename TP> wg_peer *WgPeer<TP>::getStruct() const noexcept {
+template<typename TP>
+wg_peer* WgPeer<TP>::getStruct() const noexcept {
   typename TP::Lock lock(mutex);
   return peer.get();
 }
 
-template <typename TP>
-void WgPeer<TP>::setKey(WgKey<TP> &&key, KeyType type) const {
+template<typename TP>
+void WgPeer<TP>::setKey(WgKey<TP>&& key, KeyType type) const {
   if (peer == nullptr)
-    return;
+	return;
 
   if (!key.isProper())
-    throw std::invalid_argument(
-        std::string(type == KeyType::PRESHARED ? "Preshared" : "Public") +
-        " key must be non zero");
+	throw std::invalid_argument(std::string(type == KeyType::PRESHARED ? "Preshared" : "Public") +
+	                            " key must be non zero");
 
   if (type == KeyType::PUBLIC) {
-    std::memmove(peer->public_key, key.data(), key.size());
-    peer->flags |= WGPEER_HAS_PUBLIC_KEY;
+	std::memmove(peer->public_key, key.data(), key.size());
+	peer->flags |= WGPEER_HAS_PUBLIC_KEY;
   } else if (type == KeyType::PRESHARED) {
-    std::memmove(peer->preshared_key, key.data(), key.size());
-    peer->flags |= WGPEER_HAS_PRESHARED_KEY;
+	std::memmove(peer->preshared_key, key.data(), key.size());
+	peer->flags |= WGPEER_HAS_PRESHARED_KEY;
   }
 
   key.makeZero();
 }
 
-template <typename TP> void WgPeer<TP>::invalidateAllowedIPs() noexcept {
+template<typename TP>
+void WgPeer<TP>::invalidateAllowedIPs() noexcept {
   if (ips.empty())
-    return;
+	return;
 
   auto first = ips.begin();
   peer->first_allowedip = (*first).get()->getStruct();
 
   auto second = std::next(first);
   while (second != ips.end()) {
-    auto &ip1 = *first->get();
-    auto &ip2 = *second->get();
+	auto& ip1 = *first->get();
+	auto& ip2 = *second->get();
 
-    ip1.connect(ip2.getStruct());
+	ip1.connect(ip2.getStruct());
 
-    ++first;
-    ++second;
+	++first;
+	++second;
   }
 
-  auto &rip = *first->get();
+  auto& rip = *first->get();
   peer->last_allowedip = rip.getStruct();
   rip.disconnect();
 }
 
-template <typename TP>
-WgPeer<TP> &WgPeer<TP>::operator=(WgPeer &&other) noexcept {
+template<typename TP>
+WgPeer<TP>& WgPeer<TP>::operator=(WgPeer&& other) noexcept {
   if (this != &other) {
-    if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::scoped_lock lock(this->mutex, other.mutex);
+	if constexpr (std::is_same_v<TP, MultiThreaded>) {
+	  std::scoped_lock lock(this->mutex, other.mutex);
 
-      peer = std::move(other.peer);
-      ips = std::move(other.ips);
-    } else {
-      peer = std::move(other.peer);
-      ips = std::move(other.ips);
-    }
+	  peer = std::move(other.peer);
+	  ips = std::move(other.ips);
+	} else {
+	  peer = std::move(other.peer);
+	  ips = std::move(other.ips);
+	}
   }
   return *this;
 }

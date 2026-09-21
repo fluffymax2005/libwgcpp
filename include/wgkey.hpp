@@ -31,14 +31,14 @@ extern "C" {
 #include "wireguard.h"
 }
 
-#include "threadsafety.hpp"
-
 #include <array>
 #include <cstdint>
 #include <cstring>
 #include <string>
 #include <string_view>
 #include <type_traits>
+
+#include "threadsafety.hpp"
 
 /**
  * @brief Length of Wireguard key
@@ -60,10 +60,8 @@ enum class KeyType : uint8_t {
  * @param b right side flag mask
  * @return result of bitwise or a and b
  */
-inline enum wg_device_flags operator|(enum wg_device_flags a,
-                                      enum wg_device_flags b) {
-  return static_cast<wg_device_flags>(static_cast<int>(a) |
-                                      static_cast<int>(b));
+inline enum wg_device_flags operator|(enum wg_device_flags a, enum wg_device_flags b) {
+  return static_cast<wg_device_flags>(static_cast<int>(a) | static_cast<int>(b));
 }
 
 /**
@@ -72,8 +70,7 @@ inline enum wg_device_flags operator|(enum wg_device_flags a,
  * @param b right side flag mask
  * @return reference to a which is result of bitwise or a and b
  */
-inline enum wg_device_flags &operator|=(enum wg_device_flags &a,
-                                        enum wg_device_flags b) {
+inline enum wg_device_flags& operator|=(enum wg_device_flags& a, enum wg_device_flags b) {
   a = a | b;
   return a;
 }
@@ -84,7 +81,8 @@ inline enum wg_device_flags &operator|=(enum wg_device_flags &a,
  * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by
  * default.
  */
-template <typename ThreadPolicy = MultiThreaded> class WgKey {
+template<typename ThreadPolicy = MultiThreaded>
+class WgKey {
 public:
   /**
    * @brief Type of element of key.
@@ -121,7 +119,7 @@ public:
    * @brief Get raw const pointer to key content.
    * @return
    */
-  const elem_t *data() const noexcept;
+  const elem_t* data() const noexcept;
 
   /**
    * @brief Get Wireguard key size.
@@ -154,7 +152,7 @@ public:
    * @retval true if valid
    * @retval false otherwise
    */
-  static bool validateRawKey(const key_type &raw_key) noexcept;
+  static bool validateRawKey(const key_type& raw_key) noexcept;
 
   /**
    * @brief Validate Base64 string Wireguard key representation.
@@ -181,7 +179,7 @@ public:
    * bytes.
    * @retval false otherwise
    */
-  bool operator==(const WgKey &other) const noexcept;
+  bool operator==(const WgKey& other) const noexcept;
 
   /**
    * @brief Compares keys' string representation.
@@ -204,61 +202,64 @@ protected:
   mutable typename ThreadPolicy::Mutex mutex;
 };
 
-template <typename TP>
-bool WgKey<TP>::validateRawKey(const key_type &raw_key) noexcept {
+template<typename TP>
+bool WgKey<TP>::validateRawKey(const key_type& raw_key) noexcept {
   return !wg_key_is_zero(raw_key.data());
 }
 
-template <typename TP>
+template<typename TP>
 bool WgKey<TP>::validateB64StringKey(std::string_view key) noexcept {
   key_type raw_key;
   return wg_key_from_base64(raw_key.data(), key.data()) == 0;
 }
 
-template <typename TP>
-const typename WgKey<TP>::elem_t *WgKey<TP>::data() const noexcept {
+template<typename TP>
+const typename WgKey<TP>::elem_t* WgKey<TP>::data() const noexcept {
   typename TP::Lock lock(mutex);
   return key.data();
 }
 
-template <typename TP>
-bool WgKey<TP>::operator==(const WgKey &other) const noexcept {
+template<typename TP>
+bool WgKey<TP>::operator==(const WgKey& other) const noexcept {
   typename TP::Lock lock(mutex);
   return std::memcmp(key.data(), other.key.data(), sizeof(key));
 }
 
-template <typename TP>
+template<typename TP>
 bool WgKey<TP>::operator==(std::string_view other) const noexcept {
   typename TP::Lock lock(mutex);
   key_type other_raw_key;
   if (wg_key_from_base64(other_raw_key.data(), other.data()))
-    return false;
+	return false;
   return std::memcmp(key.data(), other_raw_key.data(), sizeof(key));
 }
 
-template <typename TP> constexpr uint32_t WgKey<TP>::size() const noexcept {
+template<typename TP>
+constexpr uint32_t WgKey<TP>::size() const noexcept {
   return WG_KEY_LEN;
 }
 
-template <typename TP>
-std::array<typename WgKey<TP>::elem_t, WG_KEY_LEN>
-WgKey<TP>::cloneData() const noexcept {
+template<typename TP>
+std::array<typename WgKey<TP>::elem_t, WG_KEY_LEN> WgKey<TP>::cloneData() const noexcept {
   typename TP::Lock lock(mutex);
   return key;
 }
 
-template <typename TP> void WgKey<TP>::makeZero() noexcept {
+template<typename TP>
+void WgKey<TP>::makeZero() noexcept {
   typename TP::Lock lock(mutex);
   std::memset(key.data(), 0, WG_KEY_LEN);
 }
 
-template <typename TP> void WgKey<TP>::makeZeroNoMutex() noexcept {
+template<typename TP>
+void WgKey<TP>::makeZeroNoMutex() noexcept {
   std::memset(key.data(), 0, WG_KEY_LEN);
 }
 
-template <typename TP> std::string WgKey<TP>::toB64String() const {
+template<typename TP>
+std::string WgKey<TP>::toB64String() const {
   if (!isProper())
-    return "";
+	return "";
   b64_key_type key_b64;
   wg_key_to_base64(key_b64, key.data());
   return std::string(key_b64);

@@ -31,12 +31,13 @@ extern "C" {
 #include "wireguard.h"
 }
 
-#include "threadsafety.hpp"
-
 #include <arpa/inet.h>
+
 #include <cstring>
 #include <stdexcept>
 #include <string>
+
+#include "threadsafety.hpp"
 
 /**
  * @enum
@@ -53,7 +54,8 @@ enum class Protocol : uint8_t {
  * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by
  * default.
  */
-template <typename ThreadPolicy = MultiThreaded> class WgAllowedIP {
+template<typename ThreadPolicy = MultiThreaded>
+class WgAllowedIP {
 public:
   /**
    * @fn
@@ -65,13 +67,13 @@ public:
    * @brief Default copy constructor.
    * @param other other instance of WgAllowedIP
    */
-  WgAllowedIP(const WgAllowedIP &other) noexcept = default;
+  WgAllowedIP(const WgAllowedIP& other) noexcept = default;
 
   /**
    * @brief Default copy operator=.
    * @param other other instance of WgAllowedIP
    */
-  WgAllowedIP &operator=(const WgAllowedIP &other) noexcept = default;
+  WgAllowedIP& operator=(const WgAllowedIP& other) noexcept = default;
 
   /**
    * @brief Move constructor.
@@ -79,14 +81,14 @@ public:
    * @note Copies WgAllowedIP::ip, but sets <TT>other.ip.next_allowedip =
    * nullptr</TT>.
    */
-  WgAllowedIP(WgAllowedIP &&other) noexcept;
+  WgAllowedIP(WgAllowedIP&& other) noexcept;
 
   /**
    * @brief Move operator=.
    * @param other other instance of WgAllowedIP
    * @note Sets <TT>other.ip.next_allowedip = nullptr</TT>
    */
-  WgAllowedIP &operator=(WgAllowedIP &&other) noexcept;
+  WgAllowedIP& operator=(WgAllowedIP&& other) noexcept;
 
   /**
    * @brief Default constructor. Initializes WgAllowedIP::ip as if it contains
@@ -102,7 +104,7 @@ public:
    * <b>OR</b> invalid address index is provided <b>OR</b> prefix is not in
    * range [0; 32] and [0; 128] for IPv4 and IPv6, respectively
    */
-  explicit WgAllowedIP(const std::string &cidr);
+  explicit WgAllowedIP(const std::string& cidr);
 
   /**
    * @brief Constructs object using CIDR. C version.
@@ -112,7 +114,7 @@ public:
    * <b>OR</b> invalid address index is provided <b>OR</b> prefix is not in
    * range [0; 32] and [0; 128] for IPv4 and IPv6, respectively
    */
-  explicit WgAllowedIP(const char *cidr);
+  explicit WgAllowedIP(const char* cidr);
 
   /**
    * @brief Validate provided cidr.
@@ -120,7 +122,7 @@ public:
    * @retval true if valid
    * @retval false otherwise
    */
-  static bool validate(const std::string &cidr);
+  static bool validate(const std::string& cidr);
 
   /**
    * @brief Validate provided cidr. C version.
@@ -128,7 +130,7 @@ public:
    * @retval true if valid
    * @retval false otherwise
    */
-  static bool validate(const char *cidr) noexcept;
+  static bool validate(const char* cidr) noexcept;
 
   /**
    * @brief operator==.
@@ -138,7 +140,7 @@ public:
    * other.ip.ip4.s_addr (for IPv4) or this->ip.ip6 == other.ip.ip6 (for
    * IPv6)<br> <b>false</b> otherwise
    */
-  bool operator==(const WgAllowedIP &other) const noexcept;
+  bool operator==(const WgAllowedIP& other) const noexcept;
 
   /**
    * @brief Changes CIDR of WgAllowedIP::ip. STL version.
@@ -148,7 +150,7 @@ public:
    * <b>OR</b> invalid address index is provided <b>OR</b> prefix is not in
    * range [0; 32] and [0; 128] for IPv4 and IPv6, respectively
    */
-  void setCIDR(const std::string &cidr);
+  void setCIDR(const std::string& cidr);
 
   /**
    * @brief Changes CIDR of WgAllowedIP::ip. C version.
@@ -158,7 +160,7 @@ public:
    * <b>OR</b> invalid address index is provided <b>OR</b> prefix is not in
    * range [0; 32] and [0; 128] for IPv4 and IPv6, respectively
    */
-  void setCIDR(const char *cidr);
+  void setCIDR(const char* cidr);
 
   /**
    * @brief C compability layer to interact with other classes.
@@ -166,14 +168,14 @@ public:
    * @warning Should <b>not</b> be modified manually outside of class. Use only
    * to connect with other classes.
    */
-  wg_allowedip *getStruct() noexcept;
+  wg_allowedip* getStruct() noexcept;
 
   /**
    * @brief Connects this instance with other. If <TT>other == nullptr</TT> does
    * nothing.
    * @param other pointer to other instance
    */
-  void connect(wg_allowedip *other) noexcept;
+  void connect(wg_allowedip* other) noexcept;
 
   /**
    * @brief Disconnect this instance. Sets <TT>ip.next_allowedip = nullptr</TT>.
@@ -220,70 +222,75 @@ private:
   mutable typename ThreadPolicy::Mutex mutex;
 };
 
-template <typename TP>
-WgAllowedIP<TP>::WgAllowedIP(WgAllowedIP &&other) noexcept {
+template<typename TP>
+WgAllowedIP<TP>::WgAllowedIP(WgAllowedIP&& other) noexcept {
   if (this != &other) {
-    if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+	if constexpr (std::is_same_v<TP, MultiThreaded>) {
+	  std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
 
-      this->ip = other.ip;
-      other.ip.next_allowedip = nullptr;
-    } else {
-      this->ip = other.ip;
-      other.ip.next_allowedip = nullptr;
-    }
+	  this->ip = other.ip;
+	  other.ip.next_allowedip = nullptr;
+	} else {
+	  this->ip = other.ip;
+	  other.ip.next_allowedip = nullptr;
+	}
   }
 }
 
-template <typename TP> WgAllowedIP<TP>::WgAllowedIP() noexcept {
+template<typename TP>
+WgAllowedIP<TP>::WgAllowedIP() noexcept {
   // Default is "0.0.0.0/0"
   ip.family = AF_INET;
   ip.ip4.s_addr = 0;
   ip.cidr = 0;
 }
 
-template <typename TP> WgAllowedIP<TP>::WgAllowedIP(const std::string &cidr) {
+template<typename TP>
+WgAllowedIP<TP>::WgAllowedIP(const std::string& cidr) {
   setCIDR(cidr);
 }
 
-template <typename TP> WgAllowedIP<TP>::WgAllowedIP(const char *cidr) {
+template<typename TP>
+WgAllowedIP<TP>::WgAllowedIP(const char* cidr) {
   setCIDR(cidr);
 }
 
-template <typename TP> bool WgAllowedIP<TP>::validate(const std::string &cidr) {
+template<typename TP>
+bool WgAllowedIP<TP>::validate(const std::string& cidr) {
   try {
-    WgAllowedIP inst(cidr);
-    return true;
+	WgAllowedIP inst(cidr);
+	return true;
   } catch (...) {
-    return false;
+	return false;
   }
 }
 
-template <typename TP>
-bool WgAllowedIP<TP>::validate(const char *cidr) noexcept {
+template<typename TP>
+bool WgAllowedIP<TP>::validate(const char* cidr) noexcept {
   try {
-    WgAllowedIP inst(cidr);
-    return true;
+	WgAllowedIP inst(cidr);
+	return true;
   } catch (...) {
-    return false;
+	return false;
   }
 }
 
-template <typename TP>
-bool WgAllowedIP<TP>::operator==(const WgAllowedIP &other) const noexcept {
+template<typename TP>
+bool WgAllowedIP<TP>::operator==(const WgAllowedIP& other) const noexcept {
   typename TP::Lock lock(mutex);
   if (ip.family != other.ip.family)
-    return false;
+	return false;
   if (ip.cidr != other.ip.cidr)
-    return false;
+	return false;
 
   if (ip.family == AF_INET)
-    return ip.ip4.s_addr == other.ip.ip4.s_addr;
+	return ip.ip4.s_addr == other.ip.ip4.s_addr;
   else
-    return std::memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
+	return std::memcmp(&ip.ip6, &other.ip.ip6, sizeof(in6_addr)) == 0;
 }
 
-template <typename TP> void WgAllowedIP<TP>::setCIDR(const std::string &cidr) {
+template<typename TP>
+void WgAllowedIP<TP>::setCIDR(const std::string& cidr) {
   // Simple check (not sure for 100%) of CIDR notation
   const auto slash_pos = cidr.find_first_of('/');
 
@@ -291,154 +298,153 @@ template <typename TP> void WgAllowedIP<TP>::setCIDR(const std::string &cidr) {
   int prefix_len = 0;
 
   if (slash_pos != std::string::npos) {
-    // Address part might exist
-    addr_part = cidr.substr(0, slash_pos);
+	// Address part might exist
+	addr_part = cidr.substr(0, slash_pos);
 
-    // Prefix len might exist and must be tried to be extracted
-    try {
-      prefix_len = std::stoi(cidr.substr(slash_pos + 1));
-    } catch (...) {
-      throw std::invalid_argument("CIDR \"" + cidr +
-                                  "\" is not valid. Prefix conversion failed");
-    }
+	// Prefix len might exist and must be tried to be extracted
+	try {
+	  prefix_len = std::stoi(cidr.substr(slash_pos + 1));
+	} catch (...) {
+	  throw std::invalid_argument("CIDR \"" + cidr + "\" is not valid. Prefix conversion failed");
+	}
 
-    if (prefix_len < 0 || prefix_len > 128)
-      throw std::invalid_argument(
-          "CIDR \"" + cidr +
-          "\" is not valid. Prefix value is not in range [0; 128]");
+	if (prefix_len < 0 || prefix_len > 128)
+	  throw std::invalid_argument("CIDR \"" + cidr +
+	                              "\" is not valid. Prefix value is not in range [0; 128]");
 
   } else {
-    throw std::invalid_argument("CIDR \"" + cidr +
-                                "\" is not valid. Prefix is not found");
+	throw std::invalid_argument("CIDR \"" + cidr + "\" is not valid. Prefix is not found");
   }
 
   unsigned char buf[sizeof(struct in6_addr)];
   typename TP::Lock lock(mutex);
   if (inet_pton(AF_INET, addr_part.c_str(), buf) == 1) {
-    if (prefix_len > 32)
-      throw std::invalid_argument(
-          "CIDR \"" + cidr +
-          "\" is not valid. IPv4 prefix cannot be more than 32");
-    ip.family = AF_INET;
-    std::memmove(&ip.ip4.s_addr, buf, sizeof(struct in_addr));
+	if (prefix_len > 32)
+	  throw std::invalid_argument("CIDR \"" + cidr +
+	                              "\" is not valid. IPv4 prefix cannot be more than 32");
+	ip.family = AF_INET;
+	std::memmove(&ip.ip4.s_addr, buf, sizeof(struct in_addr));
   } else if (inet_pton(AF_INET6, addr_part.c_str(), buf) == 1) {
-    ip.family = AF_INET6;
-    std::memmove(&ip.ip6, buf, sizeof(buf));
+	ip.family = AF_INET6;
+	std::memmove(&ip.ip6, buf, sizeof(buf));
   } else {
-    throw std::invalid_argument(
-        "CIDR \"" + cidr +
-        "\" is not valid. CIDR from text to binary conversion failed");
+	throw std::invalid_argument("CIDR \"" + cidr +
+	                            "\" is not valid. CIDR from text to binary conversion failed");
   }
 
   ip.cidr = prefix_len;
 }
 
-template <typename TP> void WgAllowedIP<TP>::setCIDR(const char *cidr) {
+template<typename TP>
+void WgAllowedIP<TP>::setCIDR(const char* cidr) {
   // Simple check (not sure for 100%) of CIDR notation
-  const auto *slash_pos = std::strchr(cidr, '/');
+  const auto* slash_pos = std::strchr(cidr, '/');
 
   char addr_part[INET6_ADDRSTRLEN + 1]{};
   int prefix_len = 0;
 
   if (slash_pos) {
-    // Address part might exist
-    std::strncpy(addr_part, cidr, slash_pos - cidr);
+	// Address part might exist
+	std::strncpy(addr_part, cidr, slash_pos - cidr);
 
-    // Prefix len might exist and must be tried to be extracted
-    char *end;
-    prefix_len = strtol(slash_pos + 1, &end, 10);
+	// Prefix len might exist and must be tried to be extracted
+	char* end;
+	prefix_len = strtol(slash_pos + 1, &end, 10);
 
-    if (*end != '\0')
-      throw std::invalid_argument(std::string("CIDR \"") + cidr +
-                                  "\" is not valid. Prefix conversion failed");
-    if (prefix_len < 0 || prefix_len > 128)
-      throw std::invalid_argument(
-          std::string("CIDR \"") + cidr +
-          "\" is not valid. Prefix value is not in range [0; 128]");
+	if (*end != '\0')
+	  throw std::invalid_argument(std::string("CIDR \"") + cidr +
+	                              "\" is not valid. Prefix conversion failed");
+	if (prefix_len < 0 || prefix_len > 128)
+	  throw std::invalid_argument(std::string("CIDR \"") + cidr +
+	                              "\" is not valid. Prefix value is not in range [0; 128]");
   } else {
-    throw std::invalid_argument(std::string("CIDR \"") + cidr +
-                                "\" is not valid. Prefix is not found");
+	throw std::invalid_argument(std::string("CIDR \"") + cidr +
+	                            "\" is not valid. Prefix is not found");
   }
 
   unsigned char buf[sizeof(struct in6_addr)];
   typename TP::Lock lock(mutex);
   if (inet_pton(AF_INET, addr_part, buf) == 1) {
-    if (prefix_len > 32)
-      throw std::invalid_argument(
-          std::string("CIDR \"") + cidr +
-          "\" is not valid. IPv4 prefix cannot be more than 32");
-    ip.family = AF_INET;
-    std::memmove(&ip.ip4.s_addr, buf, sizeof(struct in_addr));
+	if (prefix_len > 32)
+	  throw std::invalid_argument(std::string("CIDR \"") + cidr +
+	                              "\" is not valid. IPv4 prefix cannot be more than 32");
+	ip.family = AF_INET;
+	std::memmove(&ip.ip4.s_addr, buf, sizeof(struct in_addr));
   } else if (inet_pton(AF_INET6, addr_part, buf) == 1) {
-    ip.family = AF_INET6;
-    std::memmove(&ip.ip6, buf, sizeof(buf));
+	ip.family = AF_INET6;
+	std::memmove(&ip.ip6, buf, sizeof(buf));
   } else {
-    throw std::invalid_argument(
-        std::string("CIDR \"") + cidr +
-        "\" is not valid. CIDR from text to binary conversion failed");
+	throw std::invalid_argument(std::string("CIDR \"") + cidr +
+	                            "\" is not valid. CIDR from text to binary conversion failed");
   }
 
   ip.cidr = prefix_len;
 }
 
-template <typename TP> Protocol WgAllowedIP<TP>::getProto() const noexcept {
+template<typename TP>
+Protocol WgAllowedIP<TP>::getProto() const noexcept {
   typename TP::Lock lock(mutex);
   return static_cast<Protocol>(ip.family);
 }
 
-template <typename TP> std::string WgAllowedIP<TP>::getAddr() const {
+template<typename TP>
+std::string WgAllowedIP<TP>::getAddr() const {
   std::string addr;
   char buf[INET6_ADDRSTRLEN];
   typename TP::Lock lock(mutex);
   if (ip.family == AF_INET) {
-    addr = std::string(inet_ntop(AF_INET, &ip.ip4, buf, sizeof(buf)));
+	addr = std::string(inet_ntop(AF_INET, &ip.ip4, buf, sizeof(buf)));
   } else {
-    addr = std::string(inet_ntop(AF_INET6, &ip.ip6, buf, sizeof(buf)));
+	addr = std::string(inet_ntop(AF_INET6, &ip.ip6, buf, sizeof(buf)));
   }
 
   return addr;
 }
 
-template <typename TP> std::string WgAllowedIP<TP>::getCIDR() const {
+template<typename TP>
+std::string WgAllowedIP<TP>::getCIDR() const {
   typename TP::Lock lock(mutex);
   return getAddr() + '/' + std::to_string(ip.cidr);
 }
 
-template <typename TP> uint8_t WgAllowedIP<TP>::getCIDRNumber() const noexcept {
+template<typename TP>
+uint8_t WgAllowedIP<TP>::getCIDRNumber() const noexcept {
   typename TP::Lock(mutex);
   return ip.cidr;
 }
 
-template <typename TP> wg_allowedip *WgAllowedIP<TP>::getStruct() noexcept {
+template<typename TP>
+wg_allowedip* WgAllowedIP<TP>::getStruct() noexcept {
   return &ip;
 }
 
-template <typename TP>
-void WgAllowedIP<TP>::connect(wg_allowedip *other) noexcept {
+template<typename TP>
+void WgAllowedIP<TP>::connect(wg_allowedip* other) noexcept {
   if (other == nullptr)
-    return;
+	return;
 
   typename TP::Lock lock(mutex);
   ip.next_allowedip = other;
 }
 
-template <typename TP> void WgAllowedIP<TP>::disconnect() noexcept {
+template<typename TP>
+void WgAllowedIP<TP>::disconnect() noexcept {
   typename TP::Lock lock(mutex);
   ip.next_allowedip = nullptr;
 }
 
-template <typename TP>
-WgAllowedIP<TP> &WgAllowedIP<TP>::operator=(WgAllowedIP &&other) noexcept {
+template<typename TP>
+WgAllowedIP<TP>& WgAllowedIP<TP>::operator=(WgAllowedIP&& other) noexcept {
   if (this != &other) {
-    if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::scoped_lock lock(this->mutex, other.mutex);
+	if constexpr (std::is_same_v<TP, MultiThreaded>) {
+	  std::scoped_lock lock(this->mutex, other.mutex);
 
-      this->ip = other.ip;
-      other.ip.next_allowedip = nullptr;
-    } else {
-      this->ip = other.ip;
-      other.ip.next_allowedip = nullptr;
-    }
+	  this->ip = other.ip;
+	  other.ip.next_allowedip = nullptr;
+	} else {
+	  this->ip = other.ip;
+	  other.ip.next_allowedip = nullptr;
+	}
   }
 
   return *this;

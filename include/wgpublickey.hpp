@@ -27,10 +27,10 @@
 #ifndef WGPUBLICKEY_H
 #define WGPUBLICKEY_H
 
+#include <stdexcept>
+
 #include "threadsafety.hpp"
 #include "wgprivatekey.hpp"
-
-#include <stdexcept>
 
 /**
  * @class WgPublicKey
@@ -38,7 +38,7 @@
  * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by
  * default.
  */
-template <typename ThreadPolicy = MultiThreaded>
+template<typename ThreadPolicy = MultiThreaded>
 class WgPublicKey : public WgKey<ThreadPolicy> {
 public:
   /**
@@ -46,7 +46,7 @@ public:
    * @param private_key private key
    * @throw WgException if <TT>private_key.isProper == false</TT>.
    */
-  WgPublicKey(const WgPrivateKey<ThreadPolicy> &private_key);
+  WgPublicKey(const WgPrivateKey<ThreadPolicy>& private_key);
 
   /**
    * @brief Constructs object from raw representation of key.
@@ -71,7 +71,7 @@ public:
    * <TT>other.key</TT> and <TT>this->private_key</TT> from
    * <TT>other.private_key.
    */
-  WgPublicKey(const WgPublicKey &) noexcept = default;
+  WgPublicKey(const WgPublicKey&) noexcept = default;
 
   /**
    * @brief Default copy assinment. Copies <TT>this->key</TT> from
@@ -79,7 +79,7 @@ public:
    * <TT>other.private_key.
    * @return *this.
    */
-  WgPublicKey &operator=(const WgPublicKey &) noexcept = default;
+  WgPublicKey& operator=(const WgPublicKey&) noexcept = default;
 
   /**
    * @brief Move constructor. Copies <TT>this->key</TT> from <TT>other.key</TT>
@@ -88,7 +88,7 @@ public:
    * <TT>other.private_key.makeZero</TT>.
    * @param other other instance
    */
-  WgPublicKey(WgPublicKey &&other) noexcept;
+  WgPublicKey(WgPublicKey&& other) noexcept;
 
   /**
    * @brief Move assignment. Copies <TT>this->key</TT> from <TT>other.key</TT>
@@ -97,7 +97,7 @@ public:
    * <TT>other.private_key.makeZero</TT>.
    * @param other other instance
    */
-  WgPublicKey &operator=(WgPublicKey &&other) noexcept;
+  WgPublicKey& operator=(WgPublicKey&& other) noexcept;
 
   /**
    * @brief Check whether key is in valid state.
@@ -120,74 +120,77 @@ private:
   WgPrivateKey<ThreadPolicy> private_key;
 };
 
-template <typename TP>
+template<typename TP>
 WgPublicKey<TP>::WgPublicKey(typename WgKey<TP>::key_type key) {
   if (wg_key_is_zero(key.data()))
-    throw std::invalid_argument("Key must not contain only zero bytes");
+	throw std::invalid_argument("Key must not contain only zero bytes");
   std::memcpy(this->key.data(), key.data(), sizeof(key));
 }
 
-template <typename TP> WgPublicKey<TP>::WgPublicKey(std::string_view key) {
+template<typename TP>
+WgPublicKey<TP>::WgPublicKey(std::string_view key) {
   if (wg_key_from_base64(this->key.data(), key.data()))
-    throw std::invalid_argument("Invalid Base64 key provided");
+	throw std::invalid_argument("Invalid Base64 key provided");
 }
 
-template <typename TP>
-WgPublicKey<TP>::WgPublicKey(const WgPrivateKey<TP> &private_key) {
+template<typename TP>
+WgPublicKey<TP>::WgPublicKey(const WgPrivateKey<TP>& private_key) {
   this->private_key = WgPrivateKey(private_key.cloneData());
   generate();
 }
 
-template <typename TP>
-WgPublicKey<TP>::WgPublicKey(WgPublicKey &&other) noexcept {
+template<typename TP>
+WgPublicKey<TP>::WgPublicKey(WgPublicKey&& other) noexcept {
   if (this != &other) {
-    if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::lock_guard<std::mutex> lock(other.mutex, std::adopt_lock);
+	if constexpr (std::is_same_v<TP, MultiThreaded>) {
+	  std::lock_guard<std::mutex> lock(other.mutex, std::adopt_lock);
 
-      this->key = other.key;
-      private_key = std::move(other.private_key);
+	  this->key = other.key;
+	  private_key = std::move(other.private_key);
 
-      other.makeZeroNoMutex();
-      other.private_key.makeZeroNoMutex();
-    } else {
-      this->key = other.key;
-      private_key = std::move(other.private_key);
+	  other.makeZeroNoMutex();
+	  other.private_key.makeZeroNoMutex();
+	} else {
+	  this->key = other.key;
+	  private_key = std::move(other.private_key);
 
-      other.makeZeroNoMutex();
-      other.private_key.makeZeroNoMutex();
-    }
+	  other.makeZeroNoMutex();
+	  other.private_key.makeZeroNoMutex();
+	}
   }
 }
 
-template <typename TP>
-WgPublicKey<TP> &WgPublicKey<TP>::operator=(WgPublicKey &&other) noexcept {
+template<typename TP>
+WgPublicKey<TP>& WgPublicKey<TP>::operator=(WgPublicKey&& other) noexcept {
   if (this != &other) {
-    if constexpr (std::is_same_v<TP, MultiThreaded>) {
-      std::scoped_lock lock(this->mutex, other.mutex);
+	if constexpr (std::is_same_v<TP, MultiThreaded>) {
+	  std::scoped_lock lock(this->mutex, other.mutex);
 
-      this->key = other.key;
-      private_key = std::move(other.private_key);
+	  this->key = other.key;
+	  private_key = std::move(other.private_key);
 
-      other.makeZeroNoMutex();
-      other.private_key.makeZeroNoMutex();
-    } else {
-      this->key = other.key;
-      private_key = std::move(other.private_key);
+	  other.makeZeroNoMutex();
+	  other.private_key.makeZeroNoMutex();
+	} else {
+	  this->key = other.key;
+	  private_key = std::move(other.private_key);
 
-      other.makeZeroNoMutex();
-      other.private_key.makeZeroNoMutex();
-    }
+	  other.makeZeroNoMutex();
+	  other.private_key.makeZeroNoMutex();
+	}
   }
 
   return *this;
 }
 
-template <typename TP> bool WgPublicKey<TP>::isProper() const noexcept {
+template<typename TP>
+bool WgPublicKey<TP>::isProper() const noexcept {
   typename TP::Lock lock(this->mutex);
   return !wg_key_is_zero(this->key.data());
 }
 
-template <typename TP> void WgPublicKey<TP>::generate() noexcept {
+template<typename TP>
+void WgPublicKey<TP>::generate() noexcept {
   typename TP::Lock lock(this->mutex);
   private_key.generate();
   wg_generate_public_key(this->key.data(), private_key.data());
