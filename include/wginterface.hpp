@@ -314,6 +314,35 @@ public:
   void removePeer(const WgPublicKey<ThreadPolicy> &key);
 
   /**
+   * @brief Rotate peer's public key with hot reload.
+   * @param old_key peer's current public key
+   * @param new_key peer's new public key
+   * @throw WgException if either peer not found or runtime error occured
+   * applying changes if <TT>WgInterface::isUp == true</TT>/
+   */
+  void rotatePeersPublicKey(const WgPublicKey<ThreadPolicy> &old_key,
+                            WgPublicKey<ThreadPolicy> &&new_key);
+
+  /**
+   * @brief Rotate peer's preshared key with hot reload.
+   * @param public_key peer's public key
+   * @param preshared_key peer's new preshared key
+   * @throw WgException if either peer not found or runtime error occured
+   * applying changes if <TT>WgInterface::isUp == true</TT>/
+   */
+  void rotatePeersPresharedKey(const WgPublicKey<ThreadPolicy> &public_key,
+                               WgPresharedKey<ThreadPolicy> &&preshared_key);
+
+  /**
+   * @brief Change peer's persistent keepalive.
+   * @param public_key peer's public key
+   * @param time time in seconds
+   * @throw std::invalid_argument if time not in range [1; 65535]
+   */
+  void setPeerPersistentKeepalive(const WgPublicKey<ThreadPolicy> &public_key,
+                                  uint16_t time);
+
+  /**
    * @brief Set peer's endpoint.
    * @param key peer's public key
    * @param endpoint endpoint instance to install
@@ -444,6 +473,56 @@ private:
    */
   void setNoLock();
 };
+
+template <typename TP>
+void WgInterface<TP>::setPeerPersistentKeepalive(
+    const WgPublicKey<TP> &public_key, uint16_t time) {
+  typename TP::Lock lock(mutex);
+  auto it = std::find_if(peers.begin(), peers.end(), [&](const auto &ptr) {
+    return ptr->hasPublicKey(public_key);
+  });
+  if (it == peers.end())
+    throw WgException("Peer not found", ENOENT);
+
+  (*it)->setPersistentKeepAlive(time);
+
+  if (state != UNREGISTERED)
+    setNoLock();
+}
+
+template <typename TP>
+void WgInterface<TP>::rotatePeersPublicKey(const WgPublicKey<TP> &old_key,
+                                           WgPublicKey<TP> &&new_key) {
+  typename TP::Lock lock(mutex);
+
+  auto it = std::find_if(peers.begin(), peers.end(), [&](const auto &ptr) {
+    return ptr->hasPublicKey(old_key);
+  });
+  if (it == peers.end())
+    throw WgException("Peer not found", ENOENT);
+
+  (*it)->setPublicKey(std::move(new_key));
+
+  if (state != UNREGISTERED)
+    setNoLock();
+}
+
+template <typename TP>
+void WgInterface<TP>::rotatePeersPresharedKey(
+    const WgPublicKey<TP> &public_key, WgPresharedKey<TP> &&preshared_key) {
+  typename TP::Lock lock(mutex);
+
+  auto it = std::find_if(peers.begin(), peers.end(), [&](const auto &ptr) {
+    return ptr->hasPublicKey(public_key);
+  });
+  if (it == peers.end())
+    throw WgException("Peer not found", ENOENT);
+
+  (*it)->setPresharedKey(std::move(preshared_key));
+
+  if (state != UNREGISTERED)
+    setNoLock();
+}
 
 template <typename TP>
 template <typename EndpointArg, typename>
