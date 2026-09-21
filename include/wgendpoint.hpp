@@ -34,6 +34,7 @@ extern "C" {
 #include "threadsafety.hpp"
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <stdexcept>
 #include <string>
 
@@ -42,6 +43,7 @@ extern "C" {
  * @brief Wrapper over wg_endpoint struct.
  * @tparam ThreadPolicy Thread safety policy for using. MultiThreaded is used by
  * default.
+ * @note Currently supports **only** IPv4.
  */
 template <typename ThreadPolicy = MultiThreaded> class WgEndpoint {
 public:
@@ -77,6 +79,14 @@ public:
   static WgEndpoint create(const std::string &ip, uint16_t port);
 
   /**
+   * @brief Validate Endpoint string representation.
+   * @param endpoint string representation of endpoint
+   * @retval true if valid
+   * @retval false otherwise
+   */
+  static bool validate(const std::string &endpoint);
+
+  /**
    * @brief Get endpoint pure wg_endpoint struct to directly read data
    * @return WgEndpoint::endpoint
    */
@@ -99,6 +109,32 @@ private:
    */
   WgEndpoint() noexcept;
 };
+
+template <typename TP>
+bool WgEndpoint<TP>::validate(const std::string &endpoint) {
+  const auto colon_pos = endpoint.find(':');
+  if (colon_pos == std::string::npos || colon_pos != endpoint.find_last_of(':'))
+    return false;
+
+  std::string_view addr_sv = std::string_view(endpoint).substr(0, colon_pos);
+  if (addr_sv.empty() || addr_sv.size() >= INET_ADDRSTRLEN)
+    return false;
+
+  in_addr bin_addr;
+  if (inet_pton(AF_INET, std::string(addr_sv).c_str(), &bin_addr) != 1)
+    return false;
+
+  int port;
+  try {
+    port = std::stoi(endpoint.substr(colon_pos + 1));
+  } catch (...) {
+    return false;
+  }
+
+  if (port < 0 || port > std::numeric_limits<in_port_t>::max())
+    return false;
+  return true;
+}
 
 template <typename TP> WgEndpoint<TP>::WgEndpoint() noexcept {
   // Default Wireguard port + phony ip addr
