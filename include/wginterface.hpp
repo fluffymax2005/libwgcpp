@@ -209,7 +209,7 @@ public:
    * @brief Get interface's port.
    * @return port number.
    */
-  uint16_t getPort() const noexcept;
+  uint16_t getPort() const;
 
   /**
    * @brief Get interface's FWMark.
@@ -697,9 +697,27 @@ const char* WgInterface<TP>::getName() const noexcept {
 }
 
 template<typename TP>
-uint16_t WgInterface<TP>::getPort() const noexcept {
+uint16_t WgInterface<TP>::getPort() const {
+  uint16_t port;
   typename TP::Lock lock(mutex);
-  return device ? device->listen_port : 0;
+  if (state == UNREGISTERED) {
+	if (device)
+	  port = device->listen_port;
+	else
+	  throw std::runtime_error("Interface is not present. Create new one");
+  } else {
+	if (device->listen_port)
+	  port = device->listen_port;
+	else {
+	  wg_device* dev;
+	  if (wg_get_device(&dev, device->name))
+		throw std::runtime_error("Failed to access to kernel for port information");
+	  port = dev->listen_port;
+	  wg_free_device(dev);
+	}
+  }
+
+  return port;
 }
 
 template<typename TP>
