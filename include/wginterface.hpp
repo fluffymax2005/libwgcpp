@@ -208,6 +208,7 @@ public:
   /**
    * @brief Get interface's port.
    * @return port number.
+   * @throw std::runtime_error if failed to proceed request to kernel by any reason. In addition throws if method is called for unregistered interface
    */
   uint16_t getPort() const;
 
