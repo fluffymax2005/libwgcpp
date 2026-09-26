@@ -476,7 +476,7 @@ void WgInterface<TP>::setPeerPersistentKeepalive(const WgPublicKey<TP>& public_k
 
   (*it)->setPersistentKeepAlive(time);
 
-  if (state != UNREGISTERED)
+  if (state == POWEREDON)
 	setNoLock();
 }
 
@@ -492,7 +492,7 @@ void WgInterface<TP>::rotatePeersPublicKey(const WgPublicKey<TP>& old_key,
 
   (*it)->setPublicKey(std::move(new_key));
 
-  if (state != UNREGISTERED)
+  if (state == POWEREDON)
 	setNoLock();
 }
 
@@ -508,7 +508,7 @@ void WgInterface<TP>::rotatePeersPresharedKey(const WgPublicKey<TP>& public_key,
 
   (*it)->setPresharedKey(std::move(preshared_key));
 
-  if (state != UNREGISTERED)
+  if (state == POWEREDON)
 	setNoLock();
 }
 
@@ -525,7 +525,7 @@ void WgInterface<TP>::setPeerEndpoint(const WgPublicKey<TP>& key, EndpointArg&& 
 
   it->get()->setEndpoint(std::forward<EndpointArg>(endpoint));
 
-  if (state != UNREGISTERED) {
+  if (state == POWEREDON) {
 	setNoLock();
   }
 }
@@ -543,7 +543,7 @@ void WgInterface<TP>::addPeerAllowedIp(const WgPublicKey<TP>& key, AllowedIpArg&
 
   it->get()->addAllowedIP(std::forward<AllowedIpArg>(allowed_ip));
 
-  if (state != UNREGISTERED) {
+  if (state == POWEREDON) {
 	setNoLock();
   }
 }
@@ -560,7 +560,7 @@ void WgInterface<TP>::removePeerAllowedIp(const WgPublicKey<TP>& key, AllowedIpA
 
   it->get()->removeAllowedIP(std::forward<AllowedIpArg>(allowed_ip));
 
-  if (state != UNREGISTERED) {
+  if (state == POWEREDON) {
 	setNoLock();
   }
 }
@@ -773,7 +773,7 @@ void WgInterface<TP>::addPeer(WgPeer<TP>&& peer) {
   invalidatePeers();
 
   // Apply changes if interface is on
-  if (state != UNREGISTERED) {
+  if (state == POWEREDON) {
 	setNoLock();
   }
 }
@@ -790,14 +790,16 @@ void WgInterface<TP>::removePeer(const WgPublicKey<TP>& key) {
   if (it != peers.end()) {
 	it->get()->remove();
 
+	if (state == POWEREDON) {
+	  invalidatePeers();
+	  setNoLock();
+	}
+
 	auto prev = peers.before_begin();
 	while (std::next(prev) != it)
 	  ++prev;
 	peers.erase_after(prev);
 	invalidatePeers();
-
-	if (state != UNREGISTERED)
-	  setNoLock();
   }
 }
 
@@ -814,6 +816,8 @@ void WgInterface<TP>::setNoLock() {
 
   if (state == UNREGISTERED)
 	throw WgException("Interface is not registered", EINVAL);
+
+  device->flags |= WGDEVICE_REPLACE_PEERS;
 
   if (wg_set_device(device.get()) < 0)
 	throw WgException("Interface \"" + std::string(device->name) + "\" is unable to be set", errno);
