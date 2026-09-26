@@ -149,7 +149,7 @@ template<typename TP>
 WgEndpoint<TP>::WgEndpoint(WgEndpoint&& other) noexcept {
   if (this != &other) {
 	if constexpr (std::is_same_v<TP, MultiThreaded>) {
-	  std::lock_guard<std::mutex> lock(other.mutex, std::adopt_lock);
+	  std::lock_guard<std::mutex> lock(other.mutex);
 
 	  this->endpoint = other.endpoint;
 	} else {

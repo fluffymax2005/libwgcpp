@@ -226,7 +226,7 @@ template<typename TP>
 WgAllowedIP<TP>::WgAllowedIP(WgAllowedIP&& other) noexcept {
   if (this != &other) {
 	if constexpr (std::is_same_v<TP, MultiThreaded>) {
-	  std::lock_guard<std::mutex> lock2(other.mutex, std::adopt_lock);
+	  std::lock_guard<std::mutex> lock2(other.mutex);
 
 	  this->ip = other.ip;
 	  other.ip.next_allowedip = nullptr;
