@@ -1,5 +1,5 @@
 <p align="center">
-  <img height=400 src="https://raw.github.com/fluffymax2005/libwgcpp/8617e6a3439f0edbe4ed58899d47b69a9a0aff96/logo.jpg">
+  <img height=200 src="https://raw.github.com/fluffymax2005/libwgcpp/8617e6a3439f0edbe4ed58899d47b69a9a0aff96/logo.jpg">
 </p>
 
 # Contents
