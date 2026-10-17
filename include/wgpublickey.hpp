@@ -135,7 +135,7 @@ WgPublicKey<TP>::WgPublicKey(std::string_view key) {
 
 template<typename TP>
 WgPublicKey<TP>::WgPublicKey(const WgPrivateKey<TP>& private_key) {
-  this->private_key = WgPrivateKey(private_key.cloneData());
+  this->private_key = WgPrivateKey<TP>(private_key.cloneData());
   generate();
 }
 
